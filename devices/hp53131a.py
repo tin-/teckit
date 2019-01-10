@@ -1,9 +1,16 @@
-# xDevs.com Python 10V test for 3458A
-# http://xdevs.com/guide/ni_gpib_rpi/
+# -*- coding: utf-8 -*-
+# $Id: devices/k2510.py | Rev 40  | 2019/01/10 03:29:21 tin_fpga $
+# xDevs.com Keithley 2182/2182A nanovoltmeter module
+# Copyright (c) 2012-2019, xDevs.com
+# 
+# Python 2.7 | RPi3 
+# Project maintainers:
+#  o Tsemenko Ilya  (@)
+# https://xdevs.com/guide/teckit
+#
 import os.path
 import sys
 import time
-import ftplib
 import numbers
 import signal
 import ConfigParser
@@ -19,6 +26,10 @@ elif cfg.get('teckit', 'interface', 1) == 'vxi':
 else:
     print "No interface defined!"
     quit()
+    
+cnt = 0
+tread = 20
+temp = 18
 
 class Timeout():
   """Timeout class using ALARM signal"""
@@ -37,19 +48,15 @@ class Timeout():
   def raise_timeout(self, *args):
     raise Timeout.Timeout()
 
-class k182m_meter():
+class cntr():
     temp = 38.5
     data = ""
-    ppm = 0.0
     status_flag = 1
     temp_status_flag = 1
-    global exttemp
-    global rh
-    global hectopascals
-    global res_rtd
 
     def __init__(self,gpib,reflevel,name):
         self.gpib = gpib
+        print "\033[4;4H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : HP 53131A\033[0;39m" % self.gpib
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
@@ -59,37 +66,21 @@ class k182m_meter():
         self.name = name
         self.init_inst()
 
+    def init_inst_dummy(self):
+        # Setup SCPI DMM
+        time.sleep(0.1)
+
     def init_inst(self):
         # Setup SCPI DMM
-        #self.inst.clear()
-        self.inst.write("B1X")     # 6.5 digit resolution
-        self.inst.write("F0G0X")   # Latest A/D reading, reading without prefix
-        self.inst.write("O1P1N1W0X") # Enabled analog filter, medium dig filter, disabled
-        self.inst.write("R4X")     # Range 30mV (2), 3mV - R1, R3 - 300mV, R4 = 3V
-        self.inst.write("S2X")     # NPLC 5
-        self.inst.write("T4X")     # Trigger on X multiple
+        self.inst.clear()
+        self.inst.write("*RST")
+        self.inst.write("*CLR")
+        self.inst.write(":CONF:FREQ (@1),10E6,14")
+        self.inst.write(":FREQ:ARM:STOP:TIM 5.000")
 
-    def set_dcv_range(self, rng):
-	if rng <= 0.0031:
-	    self.inst.write("R1X")     # Range 30mV (2), 3mV - R1, R3 - 300mV, R4 = 3V
-	if rng > 0.0031 and rng < 0.031:
-	    self.inst.write("R2X")     # Range 30mV (2), 3mV - R1, R3 - 300mV, R4 = 3V
-	if rng > 0.031 and rng < 0.31:
-	    self.inst.write("R3X")     # Range 30mV (2), 3mV - R1, R3 - 300mV, R4 = 3V
-	if rng > 0.31 and rng < 3.1:
-	    self.inst.write("R4X")     # Range 30mV (2), 3mV - R1, R3 - 300mV, R4 = 3V
-	if rng > 3.1:
-	    self.inst.write("R5X")     # Range 30mV (2), 3mV - R1, R3 - 300mV, R4 = 3V
-
-    def en_rel(self):
-	ref = self.get_data()
-	self.inst.write("Z1X")		# Enable last reading as relative
-	ref = self.get_data()
-	print ("K182 relative enabled , REF = %f" % ref)
-
-    def dis_rel(self):
-	self.inst.write("Z0X")		# Disable relative
-	print ("K182 relative disabled")
+    def set_dcv_range(self, range):
+        self.inst.write(":SENS:FUNC 'VOLT:DC'")
+        self.inst.write(":SENS:VOLT:DC:RANG %e" % range)
 
     def read_data(self,cmd):
         data_float = 0.0
@@ -105,17 +96,25 @@ class k182m_meter():
         try:
             data_float = float(data_str)
         except ValueError:
-            print("Exception thrown by dmm %s on read_data() - ValueError = %s\n" % (self.name,data_str))
+            print("\033[6;36HException %s on read_data(), ValueError = %s\n" % (self.name,data_str))
             return (0,float(0)) # Exception on float conversion, 0 = error
         return (1,data_float) # Good read, 1 = converted to float w/o exception
 
     def get_data(self):
-        self.status_flag,data = self.read_data("X")
-        time.sleep(0.1)
-        self.status_flag,data = self.read_data("X")
-        time.sleep(0.1)
+        self.status_flag,data = self.read_data("READ?")
         if (self.status_flag):
-            self.data = data
+            self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
+        return self.data
+
+    def get_data_ch(self,ch_number):
+        self.inst.write(":FUNC 'FREQ %d'" % ch_number)
+    #    self.inst.write(":FREQ:ARM:STAR:SOUR IMM")
+        self.inst.write(":FREQ:ARM:STOP:SOUR TIM")
+        self.inst.write(":FREQ:ARM:STOP:TIM 2.000")
+        #self.inst.write(":CONF:FREQ (@%d)" % int(ch_number))
+        self.status_flag,data = self.read_data("READ?")
+        if (self.status_flag):
+            self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
         return self.data
 
     def get_data_status(self):
