@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/k2510.py | Rev 40  | 2019/01/10 03:29:21 tin_fpga $
+# $Id: devices/k2182.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
 # xDevs.com Keithley 2182/2182A nanovoltmeter module
 # Copyright (c) 2012-2019, xDevs.com
 # 

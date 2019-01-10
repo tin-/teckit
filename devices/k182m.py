@@ -1,5 +1,13 @@
-# xDevs.com Python 10V test for 3458A
-# http://xdevs.com/guide/ni_gpib_rpi/
+# -*- coding: utf-8 -*-
+# $Id: devices/k182m.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
+# xDevs.com Keithley 182 nVmeter module
+# Copyright (c) 2012-2019, xDevs.com
+# 
+# Python 2.7 | RPi3 
+# Project maintainers:
+#  o Tsemenko Ilya  (@)
+# https://xdevs.com/guide/teckit
+#
 import os.path
 import sys
 import time

@@ -17,12 +17,26 @@ It's main purpose is to perform controlled thermal chamber ramps and measure var
 
 ## Supported instrumentation
 
+### Measurement devices
+
 * Keithley 2001 precision DMM
 * [Keithley 2002](https://xdevs.com/review/k2002) precision DMM
 * [HP/Agilent/Keysight 3458A](https://xdevs.com/fix/hp3458a) reference DMM
 * [Fluke 8508A](https://xdevs.com/review/f8508a) reference DMM
+* Keithley 2182/2182A Nanovoltmeter
+* [Keithley 182/182-M](https://xdevs.com/review/kei182m) Nanovoltmeter
+* [Keithley 6517/6517A](https://xdevs.com/fix/kei6517/)/6517B Electrometer
+* Fluke 1590 SuperThermometer
+* [Fluke 1529](https://xdevs.com/fix/chub_e4/) Chub-E4 Thermometer
+* HP/Agilent/Keysight 53131A Frequency counter
+
+### Temperature controllers
+
 * [Keithley 2510](https://xdevs.com/fix/kei2510) TEC SMU for temperature chamber control
 * ILX 5910B TEC controller for temperature chamber control
+
+### Environment monitoring
+
 * [Adafruit BME280](https://xdevs.com/guide/bme280) temperature/humidity/pressure environment sensor
 
 ## Hardware requirements
