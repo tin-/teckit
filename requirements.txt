@@ -1,0 +1,7 @@
+x256>=0.0.3
+gpib>=1.0
+python-vxi11>=0.9
+numpy>=1.11.0
+smbus>=1.1
+Adafruit-GPIO>=1.0.3
+Adafruit-PureIO>=0.2.1
