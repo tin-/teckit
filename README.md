@@ -163,7 +163,19 @@ Each ramp sequence has five stages. Speed or duration of each stage configured i
 
 * [Adafruit BME280](https://xdevs.com/guide/bme280) temperature/humidity/pressure environment sensor
 
-## Usage examples
+## Usage examples and test rig design
+
+Simplified compact thermal chamber design can be built with affordable set of parts, such as presented on the illustration. The key components are [TEC (Peltier cooler device)](https://en.wikipedia.org/wiki/Thermoelectric_cooling), precision thermistor or RTD temperature sensor and suitable metal box with thick walls to maintain the temperature stability. 
+
+![TEC DIY chamber](https://xdevs.com/doc/xDevs.com/tec_rig.png)
+
+Use of TEC instead of passive power resistor serve dual purpose. If desired chamber temperature above the ambient, it will be used as a heater, and outside heatsink will be cooled. If desired temperature is below current box temperature, then controller will use TEC as cooling element and will regulate current flow to bring temperature down, heating up external radiator. 
+
+With some care in construction and good thermal insulation of all metal box surfaces from ambient air relative stability of temperature inside the chamber can be maintained at level +/-0.01C over hours long periods. 
+
+To make it even better/faster performing system small liquid cooling closed loop system can be used, like [this one](https://www.newegg.com/Product/Product.aspx?Item=9SIA6ZP8K82987) instead of fan-sink on external "hot" side of the TEC. It is much easier to insulate whole chamber together with pump and coldplate, instead of fiddling with fansink flow. With such liquid cooler and 40W generic TEC element (+12V 4A rating) temperature range +8C to +70C was easily achievable. 
+
+Other alternative is to repurpose small Peltier-based wine coolers in similar manner. This way one can have larger area for bigger DUT devices.
 
 ### With temperature chamber control
 
