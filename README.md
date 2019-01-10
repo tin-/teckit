@@ -1,7 +1,7 @@
 ![Status: Alpha](https://img.shields.io/badge/Status-alpha-red.svg) [![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg)](https://www.python.org/downloads/release/python-2715/) ![Build 40](https://img.shields.io/badge/Build-40-lightgrey.svg)
 
 # xDevs.com TECKit app
-VXI/GPIB Datalogger with oven control functionality for temperature coefficient or stability measurement experiments.
+VXI/GPIB Datalogger with temperature control functionality designed for DUT thermal stability measurement experiments.
 
 For latest information and updates:
 https://xdevs.com/guide/teckit
@@ -11,41 +11,17 @@ https://github.com/tin-/teckit
 
 ## Introduction
 
-xDevs.com TECKit Python open-source application is a flexible tool for controlling measurements instruments over GPIB or Ethernet.
+xDevs.com TECKit is a flexible open-source Python application for controlling multiple measurement instruments over GPIB or Ethernet bus.
 
-It's main purpose is to perform controlled thermal chamber ramps and measure various DUT using external instrumentation. This is particulary well suited for voltage reference, ADC/DAC and electronic component stability and performance evaluation.
-
-## Supported instrumentation
-
-### Measurement devices
-
-* Keithley 2001 precision DMM
-* [Keithley 2002](https://xdevs.com/review/k2002) precision DMM
-* [HP/Agilent/Keysight 3458A](https://xdevs.com/fix/hp3458a) reference DMM
-* [Fluke 8508A](https://xdevs.com/review/f8508a) reference DMM
-* Keithley 2182/2182A Nanovoltmeter
-* [Keithley 182/182-M](https://xdevs.com/review/kei182m) Nanovoltmeter
-* [Keithley 6517/6517A](https://xdevs.com/fix/kei6517/)/6517B Electrometer
-* Fluke 1590 SuperThermometer
-* [Fluke 1529](https://xdevs.com/fix/chub_e4/) Chub-E4 Thermometer
-* HP/Agilent/Keysight 53131A Frequency counter
-
-### Temperature controllers
-
-* [Keithley 2510](https://xdevs.com/fix/kei2510) TEC SMU for temperature chamber control
-* ILX 5910B TEC controller for temperature chamber control
-
-### Environment monitoring
-
-* [Adafruit BME280](https://xdevs.com/guide/bme280) temperature/humidity/pressure environment sensor
+Its main purpose is to perform controlled thermal chamber sweeps and measure various DUT parameters using external instruments. This is especially well suited for voltage reference, ADC/DAC and electronic component stability and performance evaluation.
 
 ## Hardware requirements
 
 * Raspberry Pi or similar SoC/FPGA board running Linux OS
-* I2C access for BME280 sensor support
-* Agilent E5810A for VXI11-GPIB gateway support, if VXI interface is used or,
-* Agilent 82357B USB-GPIB interface dongle for linux-gpib or,
-* NI USB-GPIB-HS interface dongle for linux-gpib
+* I2C access for [BME280 sensor](https://xdevs.com/guide/thp_rpi/) support
+* [Agilent E5810A](https://xdevs.com/guide/e5810a/) for VXI11-GPIB gateway support, if VXI interface is used or,
+* [Agilent 82357B](https://xdevs.com/guide/agilent_gpib_rpi/) USB-GPIB interface dongle for linux-gpib or,
+* [NI USB-GPIB-HS](https://xdevs.com/guide/ni_gpib_rpi/) interface dongle for linux-gpib
 
 ## Software requirements
 
@@ -65,15 +41,19 @@ You must agree with the above to have any right to use the software.
 
 ## Usage 
 
-Once all dependencies and environment setup is met, TECkit can be executed to collect measurement data.
+Once all dependencies met and environment setup configuration done, TECkit can be used to collect measurement data. Follow below step-by-step simplified guide to get started.
 
 ### Step 1
 
-Extract and configure settings file *teckit.conf* using text editor (see Configuration section below).
+Make sure your linux system is configured for linux-gpib or python-vxi. Setup guides are available for [NI USB-GPIB-HS + linux-gpib](https://xdevs.com/guide/ni_gpib_rpi/) or [Agilent 82357B](https://xdevs.com/guide/agilent_gpib_rpi/). There is simpler guide too with [Agilent E5810A](https://xdevs.com/guide/e5810a/) as well.
+
+For sensitive experiments BME380 environment sensor can be important to monitor environment changes and further data analysis. Connections and setup information [available here](https://xdevs.com/guide/thp_rpi/).
+
+Extract or clone repository on your Pi and configure settings file *teckit.conf* using text editor (see Configuration section below). 
 
 ### Step 2
 
-Include desired modules for needed instruments in **main.py**. Current release has enabled 5 instruments for measurement and 1 temperature controller:
+Include desired measurement modules for instruments in **main.py**. It is important to keep one instance per instrument, even if instruments are same model/type. Current release for example enabled 5 instruments for measurement and 1 temperature controller.
 
 ```
 if (cfg.get('mode', 'no_thermal', 1) == "false"):
@@ -97,7 +77,7 @@ dmm4 = dmm4.scpi_meter(6,0,"2002-6") # GPIB 6
 dmm5 = dmm5.dmm_meter (10,0,"3458D") # GPIB 10
 ```
 
-Then use required mode/range setting function from DMM class, such as *set_ohmf_range* to configure meter in 4-wire resistance measurement mode, and select desired range. See specific function in devices/hp3458.py as example how that translates into GPIB command sent to the actual equipment.
+Required mode/range setting function from DMM class also called from main.py, such as *set_ohmf_range* to configure meter in 4-wire resistance measurement mode, and select desired range. See specific function naming/format in devices/hp3458.py to see how that translates into GPIB command sent to the actual equipment. Consult with instrument user's manual for required command syntax.
 
 ```
 dmm1.set_ohmf_range(1e3)                                                # 3458B function/range config
@@ -107,7 +87,7 @@ dmm4.set_ohmf_range(2000)                                               # K2002-
 dmm5.set_ohmf_range(1e3)                                                # 3458D function/range config
 ```
 
-Also make sure that each meter triggered and readout is saved into *meas_val[**N**]* variable. If some variables unused, in case when less than 6 instruments used, assign them to zero instead of removing, to preserve CSV output file formatting for future use. Code related to triggering and data collection from one meter:
+Each meter triggered and readout in main loop with measurement result is saved into *meas_val[**N**]* variable. If some variables unused, often in case when less than 6 instruments used, assign them to zero instead of removing, to preserve CSV output file formatting for future use. Code related to triggering and data collection from one meter:
 
 ```
 dmm1.trigger()                         # Trigger DMM1
@@ -118,7 +98,7 @@ sdev_arr1.extend([meas_val])           # Add new value into array for NumPy
 
 ### Step 5
 
-Run application to perform the measurement sequence
+Run application to perform the measurement sequence:
 
     # python ./main.py
 
@@ -159,7 +139,43 @@ Start and end chamber temperature configured by first two settings *sv_start* an
 
 Each ramp sequence has five stages. Speed or duration of each stage configured in seconds, as shown on example listing above. It is recommended to keep hold start and peak_temp stages at least 30 minutes or more, to allow chamber reach thermal equilibrium, or the measurement data may have additional error due to unstable conditions. Ramp up and down stages can have different duration if needed. If these settings are set to very low value, like 2-5 seconds, sequence will be transformed into step response, which can be useful for PID/thermal chamber hardware tuning.
 
-## Usage examples
+## Supported instrumentation
+
+### Measurement devices
+
+* Keithley 2001 precision DMM
+* [Keithley 2002](https://xdevs.com/review/k2002) precision DMM
+* [HP/Agilent/Keysight 3458A](https://xdevs.com/fix/hp3458a) reference DMM
+* [Fluke 8508A](https://xdevs.com/review/f8508a) reference DMM
+* Keithley 2182/2182A Nanovoltmeter
+* [Keithley 182/182-M](https://xdevs.com/review/kei182m) Nanovoltmeter
+* [Keithley 6517/6517A](https://xdevs.com/fix/kei6517/)/6517B Electrometer
+* Fluke 1590 SuperThermometer
+* [Fluke 1529](https://xdevs.com/fix/chub_e4/) Chub-E4 Thermometer
+* HP/Agilent/Keysight 53131A Frequency counter
+
+### Temperature controllers
+
+* [Keithley 2510](https://xdevs.com/fix/kei2510) TEC SMU for temperature chamber control
+* ILX 5910B TEC controller for temperature chamber control
+
+### Environment monitoring
+
+* [Adafruit BME280](https://xdevs.com/guide/bme280) temperature/humidity/pressure environment sensor
+
+## Usage examples and test rig design
+
+Simplified compact thermal chamber design can be built with affordable set of parts, such as presented on the illustration. The key components are [TEC (Peltier cooler device)](https://en.wikipedia.org/wiki/Thermoelectric_cooling), precision thermistor or RTD temperature sensor and suitable metal box with thick walls to maintain the temperature stability. 
+
+![TEC DIY chamber](https://xdevs.com/doc/xDevs.com/tec_rig.png)
+
+Use of TEC instead of passive power resistor serve dual purpose. If desired chamber temperature above the ambient, it will be used as a heater, and outside heatsink will be cooled. If desired temperature is below current box temperature, then controller will use TEC as cooling element and will regulate current flow to bring temperature down, heating up external radiator. 
+
+With some care in construction and good thermal insulation of all metal box surfaces from ambient air relative stability of temperature inside the chamber can be maintained at level +/-0.01C over hours long periods. 
+
+To make it even better/faster performing system small liquid cooling closed loop system can be used, like [this one](https://www.newegg.com/Product/Product.aspx?Item=9SIA6ZP8K82987) instead of fan-sink on external "hot" side of the TEC. It is much easier to insulate whole chamber together with pump and coldplate, instead of fiddling with fansink flow. With such liquid cooler and 40W generic TEC element (+12V 4A rating) temperature range +8C to +70C was easily achievable. 
+
+Other alternative is to repurpose small Peltier-based wine coolers in similar manner. This way one can have larger area for bigger DUT devices.
 
 ### With temperature chamber control
 
@@ -203,14 +219,13 @@ After successful start, app will plot simple pseudo graphics text UI to provide 
 
 ### Without temperature control, datalog only
 
-TECKit can be used as simple data logger as well, without running temperature controller part. For this please next setting in *teckit.conf* configuration file:
+TECKit can be used as simple data logger as well, without running temperature controller part. For this edit *teckit.conf* configuration file with:
 
     no_thermal     = true
 
 When *no_thermal* is true, code related to the temperature controller hardware will not be executed, and only measurement instruments will be used for sampling. 
     
-All measurement values like instrument readings, ambient temperature data, meter temperatures and TEC chamber telemetry are stored in CSV-alike text file.
-This file have header to identify rows, such as:
+All measurement values like instrument readings, ambient temperature data, meter temperatures and TEC chamber telemetry are stored in CSV-alike text file. This file have header to identify rows, such as:
 
     date;hp3458a;hp3458b;k6;k4;meas5;meas6;val6;temp1;temp2;amb_temp;amb_rh;amb_pressure;box_temp;nvm_temp;
 
@@ -219,10 +234,10 @@ This file have header to identify rows, such as:
 ![Ramp image example](https://xdevs.com/doc/xDevs.com/teckit_example.png)
 [CSV-data file from this run](https://xdevs.com/doc/xDevs.com/teckit_example_2019.csv)
 
-Four measurement instruments used : HP 3458A GPIB 2 and 3, Keithley 2002 GPIB 4 and 6.
+Four instruments are used : HP 3458A GPIB 2 and 3, Keithley 2002 GPIB 4 and 6.
 Temperature control done by Keithley 2510 GPIB 25 with 40W TEC module and Honeywell HEL-705 platinum RTD sensor.
 
 ## Adding own measurement instrumentation support
 
-Have instrument not listed as supported? 
+Have instrument not supported? 
 It is easy to add support of new instrument, following example of existing hardware modules in /devices directory.
