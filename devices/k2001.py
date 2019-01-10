@@ -1,0 +1,133 @@
+# xDevs.com Python 10V test for 3458A
+# http://xdevs.com/guide/ni_gpib_rpi/
+import os.path
+import sys
+import Gpib
+import time
+import numbers
+import signal
+
+cnt = 0
+tread = 20
+temp = 18
+
+class Timeout():
+  """Timeout class using ALARM signal"""
+  class Timeout(Exception): pass
+
+  def __init__(self, sec):
+    self.sec = sec
+
+  def __enter__(self):
+    signal.signal(signal.SIGALRM, self.raise_timeout)
+    signal.alarm(self.sec)
+
+  def __exit__(self, *args):
+    signal.alarm(0) # disable alarm
+
+  def raise_timeout(self, *args):
+    raise Timeout.Timeout()
+
+class scpi_meter():
+    temp = 38.5
+    data = ""
+    status_flag = 1
+    temp_status_flag = 1
+
+    def __init__(self,gpib,reflevel,name):
+        self.gpib = gpib
+	print "\033[4;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keithley 2001\033[0;39m" % self.gpib
+        self.inst = Gpib.Gpib(0,self.gpib, timeout=60) # SCPI GPIB Address = self.gpib
+        self.reflevel = reflevel
+        self.name = name
+        self.init_inst()
+
+    def init_inst_fres(self):
+        # Setup SCPI DMM
+        self.inst.clear()
+	self.inst.write("*RST")
+	self.inst.write("*CLR")
+        self.inst.write(":SYST:AZER:TYPE SYNC")
+        self.inst.write(":SYST:LSYN:STAT ON")
+	self.inst.write(":SENS:FUNC 'FRES'")
+	self.inst.write(":SENS:FRES:DIG 9;NPLC 10;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:FRES:AVER:STAT ON")
+	self.inst.write(":SENS:FRES:OCOM OFF")
+	self.inst.write(":SENS:FRES:RANG 20E3")
+        self.inst.write(":FORM:ELEM READ")
+
+
+    def init_inst_dummy(self):
+        # Setup SCPI DMM
+	time.sleep(0.1)
+
+    def init_inst(self):
+        # Setup SCPI DMM
+        self.inst.clear()
+	self.inst.write("*RST")
+	self.inst.write("*CLR")
+        self.inst.write(":SYST:AZER:TYPE SYNC")
+        self.inst.write(":SYST:LSYN:STAT ON")
+	#self.inst.write(":sens:temp:tran rtd")      #select thermistor
+	#self.inst.write(":sens:temp:rtd:type user") #10 kOhm thermistor
+	#self.inst.write(":sens:temp:rtd:alph 0.00375") #10 kOhm thermistor
+	#self.inst.write(":sens:temp:rtd:beta 0.160") #10 kOhm thermistor
+	#self.inst.write(":sens:temp:rtd:delt 1.605") #10 kOhm thermistor
+	#self.inst.write(":sens:temp:rtd:rzer 1000") #10 kOhm thermistor
+        #self.inst.write(":SENS:FUNC 'TEMP'")
+        #self.inst.write(":SENS:TEMP:DIG 7")
+        #self.inst.write(":SENS:TEMP:NPLC 10")
+	self.inst.write(":SENS:FUNC 'VOLT:DC'")
+	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 10;AVER:COUN 10;TCON REP")
+	self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
+	self.inst.write(":SENS:VOLT:DC:RANG 20")
+        self.inst.write(":FORM:ELEM READ")
+#        self.inst.write(":DISP:WIND:TEXT:DATA \"               \";STAT ON;")
+#        self.inst.write(":DISP:WIND2:TEXT:DATA \"               \";STAT ON;")
+#        #kei.write("READ?")
+
+    def set_ohmf_range(self, range):
+	self.inst.write(":SENS:FUNC 'FRES'")
+	self.inst.write(":SENS:FRES:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:FRES:AVER:STAT ON")
+	self.inst.write(":SENS:FRES:OCOM OFF")
+	self.inst.write(":SENS:FRES:RANG %e" % range)
+
+    def set_ohm_range(self, range):
+	self.inst.write(":SENS:FUNC 'RES'")
+	self.inst.write(":SENS:RES:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:RES:AVER:STAT ON")
+	self.inst.write(":SENS:RES:OCOM OFF")
+	self.inst.write(":SENS:RES:RANG %e" % range)
+
+    def set_dcv_range(self, range):
+	self.inst.write(":SENS:FUNC 'VOLT:DC'")
+	self.inst.write(":SENS:VOLT:DC:RANG %e" % range)
+
+    def read_data(self,cmd):
+        data_float = 0.0
+        data_str = ""
+        self.inst.write(cmd)
+        try:
+            with Timeout(20):
+                data_str = self.inst.read()
+        except Timeout.Timeout:
+            print ("Timeout exception from dmm %s on read_data() inst.read()\n" % self.name)
+            return (0,float(0))
+        #print ("Reading from dmm %s = %s" % (self.name,data_str))
+        try:
+            data_float = float(data_str)
+        except ValueError:
+            print("\033[6;36HException %s on read_data(), ValueError = %s\n" % (self.name,data_str))
+            return (0,float(0)) # Exception on float conversion, 0 = error
+        return (1,data_float) # Good read, 1 = converted to float w/o exception
+
+    def get_data(self):
+        self.status_flag,data = self.read_data("READ?")
+        if (self.status_flag):
+            self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
+        return self.data
+
+    def get_data_status(self):
+        return self.status_flag
+
