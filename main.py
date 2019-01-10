@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/k2510.py | Rev 40  | 2019/01/10 03:29:21 tin_fpga $
-# xDevs.com TEC Experiment setup app 
+# $Id: devices/main.py | Rev 40  | 2019/01/10 03:29:21 tin_fpga $
+# xDevs.com TEC Experiment app 
 # Copyright (c) 2012-2019, xDevs.com
 # 
 # Python 2.7 | RPi3 
 # Project maintainers:
-#  o Tsemenko Ilya  (@)
+#  o Ilya T.  (@)
 # https://xdevs.com/guide/teckit
 #
 import os
