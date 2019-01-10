@@ -65,7 +65,7 @@ dmm4   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load K
 dmm5   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 ```
 
-### Step 4
+### Step 3
 
 Initialize and configure instrument-specific settings. To initialize link instance like *dmm1* to related module class *dmm_meter* with parameters (**GPIB Bus address**, 0, \"**Name for error tracking**\")
 
@@ -86,6 +86,8 @@ dmm3.set_ohmf_range(200)                                                # K2002-
 dmm4.set_ohmf_range(2000)                                               # K2002-6 function/range config
 dmm5.set_ohmf_range(1e3)                                                # 3458D function/range config
 ```
+
+### Step 4
 
 Each meter triggered and readout in main loop with measurement result is saved into *meas_val[**N**]* variable. If some variables unused, often in case when less than 6 instruments used, assign them to zero instead of removing, to preserve CSV output file formatting for future use. Code related to triggering and data collection from one meter:
 
@@ -171,7 +173,7 @@ Simplified compact thermal chamber design can be built with affordable set of pa
 
 Use of TEC instead of passive power resistor serve dual purpose. If desired chamber temperature above the ambient, it will be used as a heater, and outside heatsink will be cooled. If desired temperature is below current box temperature, then controller will use TEC as cooling element and will regulate current flow to bring temperature down, heating up external radiator. 
 
-With some care in construction and good thermal insulation of all metal box surfaces from ambient air relative stability of temperature inside the chamber can be maintained at level +/-0.01C over hours long periods. 
+With some care in construction and good thermal insulation of all metal box surfaces from ambient air relative stability of temperature inside the chamber can be maintained at level +/-0.01 °C over hours long periods. 
 
 To make it even better/faster performing system small liquid cooling closed loop system can be used, like [this one](https://www.newegg.com/Product/Product.aspx?Item=9SIA6ZP8K82987) instead of fan-sink on external "hot" side of the TEC. It is much easier to insulate whole chamber together with pump and coldplate, instead of fiddling with fansink flow. With such liquid cooler and 40W generic TEC element (+12V 4A rating) temperature range +8C to +70C was easily achievable. 
 
@@ -239,5 +241,5 @@ Temperature control done by Keithley 2510 GPIB 25 with 40W TEC module and Honeyw
 
 ## Adding own measurement instrumentation support
 
-Have instrument not supported? 
-It is easy to add support of new instrument, following example of existing hardware modules in /devices directory.
+Have instrument not in the supported list? 
+It is easy to add support of the new instrument, following example of existing hardware modules in /devices directory.
