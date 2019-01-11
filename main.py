@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/main.py | Rev 40  | 2019/01/10 03:29:21 tin_fpga $
+# $Id: main.py | Rev 40  | 2019/01/10 03:29:21 tin_fpga $
 # xDevs.com TEC Experiment app 
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -16,7 +16,7 @@ import ftplib
 import numbers
 import signal
 import numpy as np
-from x256 import x256
+from tools import *
 
 import ConfigParser
 cfg = ConfigParser.ConfigParser()
@@ -131,67 +131,12 @@ env_data = [[[0 for x in range(ew)] for y in range(eh)] for z in range(ech)]
 dc, dh = 8, 1000;
 tsp_data = [[0 for x in range(dc)] for y in range(dh)] 
 
-def dormant(sec):
-    sys.stdout.write("\033[7;50H")
-    if (cfg.get('teckit', 'no_delays', 1) == 'true'):
-        print " ",
-    else:
-        print "\033[33m\033[7;50H"
-        for dorm in range (0,sec):
-            time.sleep(1)
-            sys.stdout.write('\033[7;%dH.' % ((dorm % 10) + 50))
-            if ((dorm % 5) == 0):
-                sys.stdout.write('\033[7;50H *********  %d sec to go    \r' % (sec - dorm) )
-            sys.stdout.flush()
-    sys.stdout.write('\033[7;50H                            \r')
-    sys.stdout.flush()
-    print ("\033[39m")
-
 delay_start = int(cfg.get('testset', 'delay_start', 1))                 # Hold delay in seconds
 print "\033[1;1H-i- Waiting for delayed start %d seconds" % delay_start
 dormant(delay_start)
 
-# Check if file exists, if not create it and add header
-def create_local_file(fileName):
-    if (os.path.isfile(fileName) == False):
-        with open(fileName, 'a') as o:
-            o.write("date;hp3458a;hp3458b;k6;k4;meas5;meas6;val6;temp1;temp2;amb_temp;amb_rh;amb_pressure;box_temp;nvm_temp;\r\n")
-            print ("\033[2;40H-i- DataFile %s does not exist\r\n" % fileName) 
-    else: 
-        print ("\033[2;40H-i- Datafile %s exists\r\n" % fileName)
-
-# Create file for the experiment and write header if needed
 create_local_file(fileName4)
-
-# Plot ASCII UI stuff
-print "\033[1;1H╒\033[1;100H╕\033[35;1H╘\033[35;100H╛"                  
-for gi in range (2,100):
-    print ("\033[1;%dH═" % (gi))
-    print ("\033[3;%dH─" % (gi) )
-    print ("\033[8;%dH═" % gi)
-    print ("\033[29;%dH═" % gi)
-    print ("\033[33;%dH═" % gi)
-    print ("\033[35;%dH═" % gi)
-for gy in range (2,35):
-    print ("\033[%d;1H│\033[%d;100H│" % (gy, gy))
-print "\033[33;1H╞\033[8;1H╞\033[29;1H╞\033[3;1H├\033[3;100H┤\033[8;100H╡\033[33;100H╡\033[29;100H╡"
-print "\033[41;66H│"
-
-print ("\033[42;100H\r\n")
-ix = x256.from_rgb(160, 130, 10)
-print "\033[2;3H\x1b[38;5;" + str(ix) + "m xDevs.com TEC Experiment kit \033[0;49m"
-if cfg.get('teckit', 'interface', 1) == 'gpib':
-    print "\033[2;29H USB-GPIB"
-elif cfg.get('teckit', 'interface', 1) == 'vxi':
-    print "\033[2;29H LAN-VXI "
-else:
-    print "No interface defined!"
-    quit()
-
-tec_status = ["Hold start","Ramp up   ","Hold peak ","Ramp down ","Hold end  ","\033[41;1m !ALERT! ","\033[42;1m Job done"]
-dmm_status = ["Configure ","Sample ","ACAL DCV ","ACAL ALL ","TEMP?   ","\033[41;1m !ERROR! ","\033[42;1m Job done"]
-dmm_mode = ["DCV", "OHM", "OHMF", "DCI", "ACV", "ACI"]
-dmm_terminal = ["\033[0;44m  FRONT  ", "\033[0;45m  REAR   "]
+plot_ui()
 
 if (cfg.get('mode', 'no_thermal', 1) == "false"):
     print "\033[9;72H \033[0;32mSet Temp     : %2.3f %cC\033[0;39m" % (25.0, u"\u00b0")
@@ -232,11 +177,11 @@ dmm5 = dmm5.dmm_meter (10,0,"3458D") # GPIB 10
 #dmm5 = dmm5.scpi_meter(9,0,"6581T")
 #dmm7 = dmm7.k182m_meter(18,0,"2182")
 
-dmm1.set_ohmf_range(1e3)                                                # 3458B function/range config
-dmm2.set_ohmf_range(1e3)                                                # 3458A function/range config
-dmm3.set_ohmf_range(200)                                                # K2002-4 function/range config
-dmm4.set_ohmf_range(2000)                                               # K2002-6 function/range config
-dmm5.set_ohmf_range(1e3)                                                # 3458D function/range config
+dmm1.set_ohmf_range(100e3)                                                # 3458B function/range config
+dmm2.set_ohmf_range(10e3)                                                # 3458A function/range config
+dmm3.set_ohmf_range(20000)                                                # K2002-4 function/range config
+dmm4.set_ohmf_range(20000)                                               # K2002-6 function/range config
+dmm5.set_ohmf_range(100e3)                                                # 3458D function/range config
 
 # Some unused configuration code for other meters
 #dmm5.set_ohmf_range(1e3) # 6581T
