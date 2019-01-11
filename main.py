@@ -92,12 +92,12 @@ time_start          = float(cfg.get('testset', 'time_start', 1))        # Initia
 time_hold           = float(cfg.get('testset', 'time_hold', 1))         # Temperature duration once reached peak_temp soak
 time_end            = float(cfg.get('testset', 'time_end', 1))          # Hold temperature once rampdown finished
 
-reference           = float(cfg.get('dut', 'reference', 1))             # Reference value 1
-reference2          = float(cfg.get('dut2', 'reference', 1))            # Reference value 2
-reference3          = float(cfg.get('dut3', 'reference', 1))            # Reference value 3
-reference4          = float(cfg.get('dut4', 'reference', 1))            # Reference value 4
-reference5          = float(cfg.get('dut5', 'reference', 1))            # Reference value 5
-reference6          = float(cfg.get('dut6', 'reference', 1))            # Reference value 6
+reference1          = float(cfg.get('dut', 'reference1', 1))            # Reference value 1
+reference2          = float(cfg.get('dut', 'reference2', 1))            # Reference value 2
+reference3          = float(cfg.get('dut', 'reference3', 1))            # Reference value 3
+reference4          = float(cfg.get('dut', 'reference4', 1))            # Reference value 4
+reference5          = float(cfg.get('dut', 'reference5', 1))            # Reference value 5
+reference6          = float(cfg.get('dut', 'reference6', 1))            # Reference value 6
 ppm_delta           = 0.0
 ppm_delta2          = 0.0
 
@@ -143,6 +143,8 @@ def dormant(sec):
             if ((dorm % 5) == 0):
                 sys.stdout.write('\033[7;50H *********  %d sec to go    \r' % (sec - dorm) )
             sys.stdout.flush()
+    sys.stdout.write('\033[7;50H                            \r')
+    sys.stdout.flush()
     print ("\033[39m")
 
 delay_start = int(cfg.get('testset', 'delay_start', 1))                 # Hold delay in seconds
@@ -170,7 +172,7 @@ for gi in range (2,100):
     print ("\033[29;%dH═" % gi)
     print ("\033[33;%dH═" % gi)
     print ("\033[35;%dH═" % gi)
-for gy in range (2,36):
+for gy in range (2,35):
     print ("\033[%d;1H│\033[%d;100H│" % (gy, gy))
 print "\033[33;1H╞\033[8;1H╞\033[29;1H╞\033[3;1H├\033[3;100H┤\033[8;100H╡\033[33;100H╡\033[29;100H╡"
 print "\033[41;66H│"
@@ -276,7 +278,7 @@ sdev_arr5 = []
 timing_init   = time.time()
 timing_step   = 1.0
 
-print "\033[32;5H \033[0;35mREF    A:%11.6G  B:%11.6G  C:%11.6G  D:%11.6G  E:%11.6G \033[0;39m" % (reference, reference2, reference3, reference4, reference5)
+print "\033[30;5H \033[0;35mREF    A:%11.6G  B:%11.6G  C:%11.6G  D:%11.6G  E:%11.6G \033[0;39m" % (reference1, reference2, reference3, reference4, reference5)
 print "\033[36;0H"
 
 # Main ramp loop
@@ -395,19 +397,19 @@ while (idx <= (total_time / tps) ):
     print "\033[10;88H \033[1;32m%2.3f %cC\033[0;39m" % (pv_temp, u"\u00b0")
     print "\033[11;88H \033[1;35m%5.4f \033[0;39m" % (tec_curr)
     print "\033[10;55H \033[1;38m%11.8f\033[0;39m" % (meas_val)
-    print ("\033[30;3H \033[1;32mMedian A= %.8f      " % np.median(sdev_arr1) )
-    print ("\033[31;3H \033[1;32m Sdev A = %.4G     " % ( np.std(sdev_arr1) ) )
+    print ("\033[31;3H \033[1;32mMedian A= %.8f      " % np.median(sdev_arr1) )
+    print ("\033[32;3H \033[1;32m Sdev A = %.4G     " % ( np.std(sdev_arr1) ) )
 
-    print ("\033[30;28H\033[1;33mB=%.8f " % np.median(sdev_arr2) )
-    print ("\033[30;45H\033[1;34mC=%.8f " % np.median(sdev_arr3) )
-    print ("\033[30;62H\033[1;35mD=%.8f " % np.median(sdev_arr4) )
-    print ("\033[30;79H\033[1;36mE=%.8f " % np.median(sdev_arr5) )
-    print ("\033[31;28H\033[1;33mB=%.4G " % ( np.std(sdev_arr2) ) )
-    print ("\033[31;45H\033[1;34mC=%.4G " % ( np.std(sdev_arr3) ) )
-    print ("\033[31;62H\033[1;35mD=%.4G " % ( np.std(sdev_arr4) ) )
-    print ("\033[31;79H\033[1;36mE=%.4G " % ( np.std(sdev_arr5) ) )
+    print ("\033[31;28H\033[1;33mB=%.8f " % np.median(sdev_arr2) )
+    print ("\033[31;45H\033[1;34mC=%.8f " % np.median(sdev_arr3) )
+    print ("\033[31;62H\033[1;35mD=%.8f " % np.median(sdev_arr4) )
+    print ("\033[31;79H\033[1;36mE=%.8f " % np.median(sdev_arr5) )
+    print ("\033[32;28H\033[1;33mB=%.4G " % ( np.std(sdev_arr2) ) )
+    print ("\033[32;45H\033[1;34mC=%.4G " % ( np.std(sdev_arr3) ) )
+    print ("\033[32;62H\033[1;35mD=%.4G " % ( np.std(sdev_arr4) ) )
+    print ("\033[32;79H\033[1;36mE=%.4G " % ( np.std(sdev_arr5) ) )
 
-    ppm_delta  = ((meas_val / reference) - 1) * 1e6
+    ppm_delta  = ((meas_val / reference1) - 1) * 1e6
     ppm_delta2 = ((meas_val2 / reference2) - 1) * 1e6
     ppm_delta3 = ((meas_val3 / reference3) - 1) * 1e6
     ppm_delta4 = ((meas_val4 / reference4) - 1) * 1e6
@@ -423,9 +425,9 @@ while (idx <= (total_time / tps) ):
     #print "\033[48;43H\033[1;34m%11.3f\033[0;39m" % (ppm_delta5b)
     
     # Data storage logic goes here
-    if (icnt >= 10):
+    if (icnt >= 12):
         icnt = 0
-    print ("\033[%d;3H[%6d] S%5.3f P%5.3f T%5.3f \033[1;34m A%12.9e \033[0;32mB%12.9e \033[0;33mC%12.9e C\033[0;39m" % (icnt+18, idx, sv_temp, nvm_temp, tec_curr, meas_val, meas_val2, meas_val3) ) 
+    print ("\033[%d;3H[%6d] S%5.3f P%5.3f T%5.3f \033[1;34m A%12.9e \033[0;32mB%12.9e \033[0;33mC%12.9e C\033[0;39m" % (icnt+17, idx, sv_temp, pv_temp, nvm_temp, meas_val, meas_val2, meas_val3) ) 
     icnt = icnt + 1
 
     with open(fileName4, 'a') as o1:  # Open file handles for storing values
