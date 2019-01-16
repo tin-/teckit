@@ -115,14 +115,14 @@ class dmm_meter():
     def set_ohmf_range(self,cmd):
 	self.inst.write("OHMF %g" % cmd)
 	self.inst.write("OCOMP ON")
-        self.inst.write("NPLC 50")
+        self.inst.write("NPLC 100")
         self.inst.write("NDIG 8")
-	self.inst.write("DELAY 0.3") # 2 second delay to mitigate OCOMP accuracy issue due DA
+	self.inst.write("DELAY 0.05") # 2 second delay to mitigate OCOMP accuracy issue due DA
 
     def set_ohmf_fast_range(self,cmd):
 	self.inst.write("OHMF %g" % cmd)
 	self.inst.write("OCOMP ON")
-        self.inst.write("NPLC 50")
+        self.inst.write("NPLC 100")
         self.inst.write("NDIG 8")
 	self.inst.write("DELAY 0") # 2 second delay to mitigate OCOMP accuracy issue due DA
 

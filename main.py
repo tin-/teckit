@@ -35,9 +35,10 @@ if (cfg.get('mode', 'no_thermal', 1) == "false"):
 trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
 dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-dmm5   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+#dmm5   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 dmm3   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
 dmm4   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
+dmm6   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
 
 #dmm2   = imp.load_source('f8508a', 'devices/f8508a.py')                 # Load support for HP3458A
 #em1    = imp.load_source('hp53131' , 'devices/hp53131a.py')             # Load support for K6517
@@ -171,17 +172,18 @@ dmm1 = dmm1.dmm_meter (2,0,"3458B")  # GPIB 2
 dmm2 = dmm2.dmm_meter (3,0,"3458A")  # GPIB 3
 dmm3 = dmm3.scpi_meter(4,0,"2002-4") # GPIB 4
 dmm4 = dmm4.scpi_meter(6,0,"2002-6") # GPIB 6
-dmm5 = dmm5.dmm_meter (10,0,"3458D") # GPIB 10
+#dmm5 = 0#dmm5.dmm_meter (10,0,"3458D") # GPIB 10
+dmm6 = dmm6.flk_meter(5,0,"8508")
 #cntr = em1.cntr(3,0,"53131A")
-#dmm2 = dmm2.flk_meter(5,0,"8508")
 #dmm5 = dmm5.scpi_meter(9,0,"6581T")
 #dmm7 = dmm7.k182m_meter(18,0,"2182")
 
-dmm1.set_ohmf_range(100e3)                                                # 3458B function/range config
-dmm2.set_ohmf_range(10e3)                                                # 3458A function/range config
-dmm3.set_ohmf_range(20000)                                                # K2002-4 function/range config
-dmm4.set_ohmf_range(20000)                                               # K2002-6 function/range config
-dmm5.set_ohmf_range(100e3)                                                # 3458D function/range config
+dmm1.set_ohmf_range(100)                                                # 3458B function/range config
+dmm2.set_ohmf_range(100)                                                # 3458A function/range config
+dmm3.set_ohmf_range(100)                                                # K2002-4 function/range config
+dmm4.set_ohmf_range(100)                                                # K2002-6 function/range config
+#dmm5.set_ohmf_range(200)                                                # 3458D function/range config
+dmm6.set_tohm_range(1)                                                # F8508A function/range config
 
 # Some unused configuration code for other meters
 #dmm5.set_ohmf_range(1e3) # 6581T
@@ -201,7 +203,7 @@ tread = 100
 if (cfg.get('mode', 'run_acal', 1) == "true"):
     dmm1.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
     dmm2.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
-    dmm5.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
+#    dmm5.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
     print "\033[18;3H-i- Started ACAL ALL for 860 seconds"
     dormant(860)
     total_time = total_time + 860
@@ -209,7 +211,7 @@ if (cfg.get('mode', 'run_acal', 1) == "true"):
 if (cfg.get('mode', 'run_acal_dcv', 1) == "true"):
     dmm1.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
     dmm2.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
-    dmm5.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
+#    dmm5.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
     print "\033[18;3H-i- Started ACAL DCV for 150 seconds"
     dormant(150)
     total_time = total_time + 150
@@ -315,14 +317,14 @@ while (idx <= (total_time / tps) ):
     dmm2.trigger()
     dmm3.trigger()
     dmm4.trigger()
-    dmm5.trigger()
+#    dmm5.trigger()
     # Collect measurement results
     meas_val  = dmm1.read_val()[1]
     meas_val2 = dmm2.read_val()[1]
     meas_val3 = dmm3.read_val()[1]
     meas_val4 = dmm4.read_val()[1]
-    meas_val5a = dmm5.read_val()[1]
-    meas_val5b = tps
+    meas_val5a = 0#dmm5.read_val()[1]
+    meas_val5b = dmm6.get_data()
     meas_val6 = idx
     nvm_temp = trm1.get_data() #CHUB
     # Add results to array for stats math
@@ -376,7 +378,7 @@ while (idx <= (total_time / tps) ):
     icnt = icnt + 1
 
     with open(fileName4, 'a') as o1:  # Open file handles for storing values
-        o1.write (time.strftime("%d/%m/%Y-%H:%M:%S;") + ("%2.9f;%2.9f;%2.9f;%2.9f;%2.9f;%2.9f;%2.9f;%3.1f;%3.1f;%3.3f;%3.1f;%4.1f;%3.3f;%3.3f;\n" % \
+        o1.write (time.strftime("%d/%m/%Y-%H:%M:%S;") + ("%2.8g;%2.8g;%2.8g;%2.8g;%2.8g;%2.8g;%2.8g;%3.1f;%3.1f;%3.3f;%3.1f;%4.1f;%3.3f;%3.3f;\n" % \
 (float(meas_val),float(meas_val2),float(meas_val3),float(meas_val4),float(meas_val5a),float(meas_val5b),float(meas_val6), float(dmm1_temp), float(dmm2_temp),ext_temp,ext_rh,ext_pressure,pv_temp, float(nvm_temp)) ) )
         sys.stdout.flush()
         o1.close()
