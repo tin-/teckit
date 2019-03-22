@@ -36,10 +36,11 @@ if (cfg.get('mode', 'no_thermal', 1) == "false"):
 trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
 dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-#dmm5   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-dmm3   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-dmm4   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-dmm6   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
+dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+#dmm5   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
+#dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
+#dmm7   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
 
 #dmm2   = imp.load_source('f8508a', 'devices/f8508a.py')                 # Load support for HP3458A
 #em1    = imp.load_source('hp53131' , 'devices/hp53131a.py')             # Load support for K6517
@@ -59,6 +60,14 @@ ichannel = cfg.get('chatbot', 'irc_channel', 1)
 inick = cfg.get('chatbot', 'irc_nick', 1)
 ipasswd = cfg.get('chatbot', 'irc_passwd', 1)
 
+if cfg.get('testset', 'mode', 1) == 'delta3':
+    delta_res = 3
+else:
+    delta_res = 0
+
+if delta_res == 3:
+    mfc1   = imp.load_source('hulk', 'devices/f5720a.py')                    # Load Fluke 5720+5725 support
+
 if cfg.get('chatbot', 'irc_bot_enabled', 1) == 'true':
     irc_active = 1
     print "IRC bot active"
@@ -70,11 +79,6 @@ if cfg.get('chatbot', 'irc_bot_enabled', 1) == 'true':
 else:
     irc_active = 0
     
-if irc_active:
-    itext = irc.get_text() 
-    time.sleep(1)
-    irc.write_text(ichannel, "Meow!")
-
 if cfg.get('teckit', 'env_sensor', 1) == 'bme280':
     from Adafruit_BME280 import *
     env_sensor = BME280(mode=BME280_OSAMPLE_8)
@@ -104,6 +108,9 @@ time_start Speed_pos / neg\  time_end
  Sv_start                    Sv_end
        2h     9h    2h    9h       2h
 '''
+
+cur1 = float(cfg.get('testset', 'delta_ipos', 1))
+cur2 = float(cfg.get('testset', 'delta_ineg', 1))
 
 sv_start            = float(cfg.get('testset', 'sv_start', 1))          # Chamber start temperature
 sv_end              = float(cfg.get('testset', 'sv_end', 1))            # Chamber end temperature
@@ -167,7 +174,7 @@ plot_ui()
 
 if irc_active:
     itext = irc.get_text() 
-    irc.write_text(ichannel, "Created file https://xdevs.com/datashort/%s" % (fileName4))
+    irc.write_text(ichannel, "Created file %s" % (fileName4))
 
 if (cfg.get('mode', 'no_thermal', 1) == "false"):
     print "\033[9;72H \033[0;32mSet Temp     : %2.3f %cC\033[0;39m" % (25.0, u"\u00b0")
@@ -196,27 +203,30 @@ if (cfg.get('mode', 'no_thermal', 1) == "false"):
     tecsmu.set_gain(pid_kp)
     tecsmu.set_intg(pid_ki)
     tecsmu.set_derv(pid_kd)
+if (delta_res == 3):
+    mfc = mfc1.hulk(1,0,"5720")  # GPIB 1
+    print "\033[9;40H \033[1;34mDelta mode   : %d \033[0;39m" % (delta_res)
 
 trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
-dmm1 = dmm1.dmm_meter (2,0,"3458B")  # GPIB 2
-dmm2 = dmm2.dmm_meter (3,0,"3458A")  # GPIB 3
-dmm3 = dmm3.scpi_meter(4,0,"2002-4") # GPIB 4
-dmm4 = dmm4.scpi_meter(6,0,"2002-6") # GPIB 6
-#dmm5 = 0#dmm5.dmm_meter (10,0,"3458D") # GPIB 10
-dmm6 = dmm6.flk_meter(5,0,"8508")
+dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
+dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
+dmm3 = dmm3.dmm_meter (11,0,"3458C") # GPIB 
+dmm4 = dmm4.dmm_meter (10,0,"3458D") # GPIB 
+#dmm5 = dmm5.scpi_meter(4,0,"2002-4") # GPIB 
+#dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
+#dmm6 = dmm6.flk_meter(5,0,"8508")
 #cntr = em1.cntr(3,0,"53131A")
 #dmm5 = dmm5.scpi_meter(9,0,"6581T")
 #dmm7 = dmm7.k182m_meter(18,0,"2182")
-if irc_active:
-    itext = irc.get_text() 
-    irc.write_text(ichannel, "Initialized device GPIB %d, type %s" % (5, "3458A"))
 
-dmm1.set_ohmf_range(100)                                                # 3458B function/range config
-dmm2.set_ohmf_range(100)                                                # 3458A function/range config
-dmm3.set_ohmf_range(100)                                                # K2002-4 function/range config
-dmm4.set_ohmf_range(100)                                                # K2002-6 function/range config
+dmm1.set_dcv_range(0.1)                                                # 3458A function/range config
+dmm2.set_dcv_range(1)                                                # 3458B function/range config
+dmm3.set_dcv_range(0.1)                                                # 3458C function/range config
+dmm4.set_dcv_range(0.1)                                                # 3458D function/range config
+#dmm5.set_ohmf_range(100)                                                # K2002-4 function/range config
+#dmm6.set_ohmf_range(100)                                                # K2002-6 function/range config
 #dmm5.set_ohmf_range(200)                                                # 3458D function/range config
-dmm6.set_tohm_range(1)                                                # F8508A function/range config
+#dmm6.set_tohm_range(1)                                                # F8508A function/range config
 
 # Some unused configuration code for other meters
 #dmm5.set_ohmf_range(1e3) # 6581T
@@ -236,7 +246,8 @@ tread = 100
 if (cfg.get('mode', 'run_acal', 1) == "true"):
     dmm1.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
     dmm2.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
-#    dmm5.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
+    dmm3.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
+    dmm4.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
     print "\033[18;3H-i- Started ACAL ALL for 860 seconds"
     dormant(860)
     total_time = total_time + 860
@@ -244,7 +255,8 @@ if (cfg.get('mode', 'run_acal', 1) == "true"):
 if (cfg.get('mode', 'run_acal_dcv', 1) == "true"):
     dmm1.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
     dmm2.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
-#    dmm5.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
+    dmm3.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
+    dmm4.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
     print "\033[18;3H-i- Started ACAL DCV for 150 seconds"
     dormant(150)
     total_time = total_time + 150
@@ -260,6 +272,142 @@ timing_step   = 1.0
 
 print "\033[30;5H \033[0;35mREF    A:%11.6G  B:%11.6G  C:%11.6G  D:%11.6G  E:%11.6G \033[0;39m" % (reference1, reference2, reference3, reference4, reference5)
 print "\033[36;0H"
+
+mfc.mfc_cmd("RANGELCK OFF")
+time.sleep(1)
+mfc.mfc_stby()
+mfc.mfc_cmd("OUT %.6f A;OPER" % 0.1) #Neg
+time.sleep(3)
+mfc.mfc_cmd("RANGELCK ON")
+time.sleep(1)
+mfc.mfc_cmd("OUT 0 A, 0 Hz")
+time.sleep(6)
+mfc.mfc_oper()
+time.sleep(6)
+
+zerof1 = dmm1.get_data()
+zerof2 = dmm2.get_data()
+zerof3 = dmm3.get_data()
+zerof4 = dmm4.get_data()
+time.sleep(1)
+
+print ("Zero voltage = %f uV %f uV %f uV %f uV" % ( float(zerof1) * 1e6, float(zerof2) * 1e6, float(zerof3) * 1e6, float(zerof4) * 1e6) )
+
+def delta_sample():
+    mfc.mfc_cmd("OUT %.6f A;OPER" % cur1) #Neg
+    print "\033[12;40H \033[1;34mDStage   : %s \033[0;39m" % ("Pos1")
+    time.sleep(3)
+    dmm1.trigger()
+    dmm2.trigger()
+    dmm3.trigger()
+    dmm4.trigger()
+    meas1a = dmm1.read_val()[1]
+    meas2a = dmm2.read_val()[1]
+    meas3a = dmm3.read_val()[1]
+    meas4a = dmm4.read_val()[1]
+    time.sleep(1)
+    dmm1.trigger()
+    dmm2.trigger()
+    dmm3.trigger()
+    dmm4.trigger()
+    meas1a = dmm1.read_val()[1]
+    meas2a = dmm2.read_val()[1]
+    meas3a = dmm3.read_val()[1]
+    meas4a = dmm4.read_val()[1]
+    time.sleep(1)
+    dmm1.trigger()
+    dmm2.trigger()
+    dmm3.trigger()
+    dmm4.trigger()
+    meas1a += dmm1.read_val()[1]
+    meas2a += dmm2.read_val()[1]
+    meas3a += dmm3.read_val()[1]
+    meas4a += dmm4.read_val()[1]
+    meas1a = (meas1a / 2)
+    meas2a = (meas2a / 2)
+    meas3a = (meas3a / 2)
+    meas4a = (meas4a / 2)
+
+    mfc.mfc_cmd("OUT %.6f A;OPER" % cur2) #Neg
+    print "\033[12;40H \033[1;34mDStage   : %s \033[0;39m" % ("Neg1")
+    time.sleep(3)
+    dmm1.trigger()
+    dmm2.trigger()
+    dmm3.trigger()
+    dmm4.trigger()
+    meas1b = dmm1.read_val()[1]
+    meas2b = dmm2.read_val()[1]
+    meas3b = dmm3.read_val()[1]
+    meas4b = dmm4.read_val()[1]
+    time.sleep(1)
+    dmm1.trigger()
+    dmm2.trigger()
+    dmm3.trigger()
+    dmm4.trigger()
+    meas1b = dmm1.read_val()[1]
+    meas2b = dmm2.read_val()[1]
+    meas3b = dmm3.read_val()[1]
+    meas4b = dmm4.read_val()[1]
+    time.sleep(1)
+    dmm1.trigger()
+    dmm2.trigger()
+    dmm3.trigger()
+    dmm4.trigger()
+    meas1b += dmm1.read_val()[1]
+    meas2b += dmm2.read_val()[1]
+    meas3b += dmm3.read_val()[1]
+    meas4b += dmm4.read_val()[1]
+    meas1b = (meas1b / 2)
+    meas2b = (meas2b / 2)
+    meas3b = (meas3b / 2)
+    meas4b = (meas4b / 2)
+
+    mfc.mfc_cmd("OUT %.6f A;OPER" % cur1) #Neg
+    print "\033[12;40H \033[1;34mDStage   : %s \033[0;39m" % ("Pos2")
+    time.sleep(3)
+    dmm1.trigger()
+    dmm2.trigger()
+    dmm3.trigger()
+    dmm4.trigger()
+    meas1c = dmm1.read_val()[1]
+    meas2c = dmm2.read_val()[1]
+    meas3c = dmm3.read_val()[1]
+    meas4c = dmm4.read_val()[1]
+    time.sleep(1)
+    dmm1.trigger()
+    dmm2.trigger()
+    dmm3.trigger()
+    dmm4.trigger()
+    meas1c = dmm1.read_val()[1]
+    meas2c = dmm2.read_val()[1]
+    meas3c = dmm3.read_val()[1]
+    meas4c = dmm4.read_val()[1]
+    time.sleep(1)
+    dmm1.trigger()
+    dmm2.trigger()
+    dmm3.trigger()
+    dmm4.trigger()
+    meas1c += dmm1.read_val()[1]
+    meas2c += dmm2.read_val()[1]
+    meas3c += dmm3.read_val()[1]
+    meas4c += dmm4.read_val()[1]        
+    meas1c = (meas1c / 2)
+    meas2c = (meas2c / 2)
+    meas3c = (meas3c / 2)
+    meas4c = (meas4c / 2)
+
+    calc_resa = ( ( (meas1a - zerof1) - 2*(meas1b - zerof1) + (meas1c - zerof1) ) / 4) / cur1
+    print "\033[12;40H \033[1;34mDVal %.8f \033[0;39m" % float(calc_resa)
+    calc_resb = ( ( (meas2a - zerof2) - 2*(meas2b - zerof2) + (meas2c - zerof2) ) / 4) / cur1
+    calc_resc = ( ( (meas3a - zerof3) - 2*(meas3b - zerof3) + (meas3c - zerof3) ) / 4) / cur1
+    calc_resd = ( ( (meas4a - zerof4) - 2*(meas4b - zerof4) + (meas4c - zerof4) ) / 4) / cur1
+
+    #print emvals
+    #meas_val  = calc_resa #float(emvals[0])#val()[1]
+    #meas_val2 = calc_resb #float(emvals[1])#dmm3.read_val()[1]
+    #meas_val3 = calc_resc #float(emvals[2])#dmm3.read_val()[1]
+    #meas_val4 = calc_resd #float(emvals[3])#(meas_val + meas_val3 - (2 * meas_val2) ) / 4
+    return calc_resa, calc_resb, calc_resc, calc_resd, meas1a, meas1b, meas1c
 
 # Main ramp loop
 while (idx <= (total_time / tps) ):
@@ -345,27 +493,36 @@ while (idx <= (total_time / tps) ):
         pv_temp = 0.0
         tec_curr = 0.0
 
-    # Trigger instruments to start conversion
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-#    dmm5.trigger()
-    # Collect measurement results
-    meas_val  = dmm1.read_val()[1]
-    meas_val2 = dmm2.read_val()[1]
-    meas_val3 = dmm3.read_val()[1]
-    meas_val4 = dmm4.read_val()[1]
-    meas_val5a = 0#dmm5.read_val()[1]
-    meas_val5b = dmm6.get_data()
-    meas_val6 = idx
     nvm_temp = trm1.get_data() #CHUB
+
+    # Trigger instruments to start conversion in normal mode
+    if (delta_res == 0):
+        dmm1.trigger()
+	dmm2.trigger()
+        dmm3.trigger()
+	dmm4.trigger()
+        #dmm5.trigger()
+	#dmm6.trigger()
+        # Collect measurement results
+	meas_val  = dmm1.read_val()[1]
+	meas_val2 = dmm2.read_val()[1]
+        meas_val3 = 0#dmm3.read_val()[1]
+        meas_val4 = 0#dmm4.read_val()[1]
+        meas_val5a = 0#dmm5.read_val()[1]
+        meas_val5b = 0#dmm6.get_data()
+        meas_val6 = 0#
+    
+    elif (delta_res == 3):
+        # Collect delta measurement
+	meas_val, meas_val2, meas_val3, meas_val4, meas_val5a, meas_val5b, meas_val6 = delta_sample() 
+
     # Add results to array for stats math
     sdev_arr1.extend([meas_val])
     sdev_arr2.extend([meas_val2])
     sdev_arr3.extend([meas_val3])
     sdev_arr4.extend([meas_val4])
     sdev_arr5.extend([meas_val5a])
+
 
     tread = tread - 1
     if (tread == 0):
@@ -389,6 +546,7 @@ while (idx <= (total_time / tps) ):
     print ("\033[32;62H\033[1;35mD=%.4G " % ( np.std(sdev_arr4) ) )
     print ("\033[32;79H\033[1;36mE=%.4G " % ( np.std(sdev_arr5) ) )
 
+
     ppm_delta  = ((meas_val / reference1) - 1) * 1e6
     ppm_delta2 = ((meas_val2 / reference2) - 1) * 1e6
     ppm_delta3 = ((meas_val3 / reference3) - 1) * 1e6
@@ -409,9 +567,12 @@ while (idx <= (total_time / tps) ):
         icnt = 0
     print ("\033[%d;3H[%6d] S%5.3f P%5.3f T%5.3f \033[1;34m A%12.9e \033[0;32mB%12.9e \033[0;33mC%12.9e C\033[0;39m" % (icnt+17, idx, sv_temp, pv_temp, nvm_temp, meas_val, meas_val2, meas_val3) ) 
     icnt = icnt + 1
+    if irc_active:
+	itext = irc.get_text() 
+        irc.write_text(ichannel, "Data: %.8f %.8f %.8f %.8f %.8f F1529: %.3f Ambient: %.2fC" % (meas_val, meas_val2, meas_val3, meas_val4, meas_val6, float(nvm_temp), ext_temp ) )
 
     with open(fileName4, 'a') as o1:  # Open file handles for storing values
-        o1.write (time.strftime("%d/%m/%Y-%H:%M:%S;") + ("%2.8g;%2.8g;%2.8g;%2.8g;%2.8g;%2.8g;%2.8g;%3.1f;%3.1f;%3.3f;%3.1f;%4.1f;%3.3f;%3.3f;\n" % \
+        o1.write (time.strftime("%d/%m/%Y-%H:%M:%S;") + ("%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%3.1f;%3.1f;%3.3f;%3.1f;%4.1f;%3.3f;%3.3f;\n" % \
 (float(meas_val),float(meas_val2),float(meas_val3),float(meas_val4),float(meas_val5a),float(meas_val5b),float(meas_val6), float(dmm1_temp), float(dmm2_temp),ext_temp,ext_rh,ext_pressure,pv_temp, float(nvm_temp)) ) )
         sys.stdout.flush()
         o1.close()
@@ -421,3 +582,4 @@ while (idx <= (total_time / tps) ):
     if (idx == 1):
         timing_step  = float(timing_init) - float(time.time())  # Determine duration of one data sample step
     idx+=1                  # Sample index increment
+
