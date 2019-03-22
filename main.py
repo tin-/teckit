@@ -25,6 +25,7 @@ cfg.sections()
 
 print "\033[2J"
 # Device modules 
+irc_en = 0    # IRC bot activation flag
 
 root_dir = ''
 fileName4 = root_dir + cfg.get('teckit', 'data_file', 1)
@@ -52,6 +53,27 @@ dmm6   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load F
 ext_temp     = 0.0                                                      # Ambient BME280 temperature
 ext_rh       = 0.0                                                      # Ambient relative humidity
 ext_pressure = 0.0                                                      # Ambient pressure
+
+iserver = cfg.get('chatbot', 'irc_server', 1)
+ichannel = cfg.get('chatbot', 'irc_channel', 1) 
+inick = cfg.get('chatbot', 'irc_nick', 1)
+ipasswd = cfg.get('chatbot', 'irc_passwd', 1)
+
+if cfg.get('chatbot', 'irc_bot_enabled', 1) == 'true':
+    irc_active = 1
+    print "IRC bot active"
+    ircbot = imp.load_source('irc' , 'ircbot/irc.py')                   # Load IRC bot logger
+    irc = ircbot.IRC()
+    irc.connect(iserver, ichannel, inick, ipasswd)
+    itext = irc.get_text() 
+    irc.write_text(ichannel, "TECkit Robot, Rev0.01.\n")
+else:
+    irc_active = 0
+    
+if irc_active:
+    itext = irc.get_text() 
+    time.sleep(1)
+    irc.write_text(ichannel, "Meow!")
 
 if cfg.get('teckit', 'env_sensor', 1) == 'bme280':
     from Adafruit_BME280 import *
@@ -90,7 +112,7 @@ tps                 = 1.0                                               # Time p
 slope_pos           = float(cfg.get('testset', 'slope_pos', 1))         # Steps for the positive slope
 slope_neg           = float(cfg.get('testset', 'slope_neg', 1))         # Steps for the negative slope
 time_start          = float(cfg.get('testset', 'time_start', 1))        # Initial hold temperature time, before positive slope starts
-time_hold           = float(cfg.get('testset', 'time_hold', 1))         # Temperature duration once reached peak_temp soak
+time_dwell          = float(cfg.get('testset', 'time_dwell', 1))        # Dwell temperature duration once reached peak_temp soak
 time_end            = float(cfg.get('testset', 'time_end', 1))          # Hold temperature once rampdown finished
 
 reference1          = float(cfg.get('dut', 'reference1', 1))            # Reference value 1
@@ -106,7 +128,7 @@ pid_kp              = float(cfg.get('pid', 'kp', 1))                    # P coef
 pid_ki              = float(cfg.get('pid', 'ki', 1))                    # I coefficient for thermostat controller
 pid_kd              = float(cfg.get('pid', 'kd', 1))                    # D coefficient for thermostat controller
 
-total_time          = time_start + time_hold + time_end + slope_pos + slope_neg # Test time, in seconds
+total_time          = time_start + time_dwell + time_end + slope_pos + slope_neg # Test time, in seconds
 elapsed_time        = 0
 remaining_time      = 0
 idx                 = 0                                                 # Sample index
@@ -125,6 +147,10 @@ dmm1_temp           = 10                                                # DMM1 T
 dmm2_temp           = 10                                                # DMM2 TEMP? value
 #scan = k7168_client.THP_socket('192.168.1.114',10001)                  # External scanner
 
+if irc_active:
+    itext = irc.get_text() 
+    irc.write_text(ichannel, "TECkit settings: Start %.3f C, Dwell %.3f C, End %.3f C, time = %d s" % (sv_start, peak_temp, sv_end, total_time))
+    
 w, h = 8, 1000;
 ch_data = [[0 for x in range(w)] for y in range(h)] 
 ew, eh, ech = 3, 1000, 8;
@@ -138,6 +164,10 @@ dormant(delay_start)
 
 create_local_file(fileName4)
 plot_ui()
+
+if irc_active:
+    itext = irc.get_text() 
+    irc.write_text(ichannel, "Created file https://xdevs.com/datashort/%s" % (fileName4))
 
 if (cfg.get('mode', 'no_thermal', 1) == "false"):
     print "\033[9;72H \033[0;32mSet Temp     : %2.3f %cC\033[0;39m" % (25.0, u"\u00b0")
@@ -177,6 +207,9 @@ dmm6 = dmm6.flk_meter(5,0,"8508")
 #cntr = em1.cntr(3,0,"53131A")
 #dmm5 = dmm5.scpi_meter(9,0,"6581T")
 #dmm7 = dmm7.k182m_meter(18,0,"2182")
+if irc_active:
+    itext = irc.get_text() 
+    irc.write_text(ichannel, "Initialized device GPIB %d, type %s" % (5, "3458A"))
 
 dmm1.set_ohmf_range(100)                                                # 3458B function/range config
 dmm2.set_ohmf_range(100)                                                # 3458A function/range config
@@ -277,19 +310,19 @@ while (idx <= (total_time / tps) ):
         #print "\033[56;2H DUR PSLOPE %f" % ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
         sv_temp = sv_start + ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
         print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[1])
-    elif (idx >= ((time_start + slope_pos) / tps)) and (idx < ((time_start + slope_pos + time_hold) / tps)):
+    elif (idx >= ((time_start + slope_pos) / tps)) and (idx < ((time_start + slope_pos + time_dwell) / tps)):
         # Start peak hold temp
         sv_temp = peak_temp
         print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[2])
-    elif (idx >= ((time_start + slope_pos + time_hold) / tps)) and (idx < ((time_start + slope_pos + time_hold + slope_neg) / tps)):
+    elif (idx >= ((time_start + slope_pos + time_dwell) / tps)) and (idx < ((time_start + slope_pos + time_dwell + slope_neg) / tps)):
         # Ramp down
         temp_nslope = peak_temp - sv_end 
-        dur_nslope = float((time_start + time_hold + slope_pos) / tps) - float((time_start + slope_pos + time_hold + slope_neg) / tps )
+        dur_nslope = float((time_start + time_dwell + slope_pos) / tps) - float((time_start + slope_pos + time_dwell + slope_neg) / tps )
         #print "\033[55;2H TEMP NSLOPE %f" % temp_nslope
         #print "\033[56;2H DUR NSLOPE %f" % dur_nslope
-        sv_temp = peak_temp + ( (temp_nslope / dur_nslope) * (idx - (((time_start + time_hold + slope_neg) / tps)) ) )
+        sv_temp = peak_temp + ( (temp_nslope / dur_nslope) * (idx - (((time_start + time_dwell + slope_neg) / tps)) ) )
         print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[3])
-    elif (idx >= (time_start + slope_pos + time_hold + slope_neg) / tps) and (idx < (total_time) / tps):
+    elif (idx >= (time_start + slope_pos + time_dwell + slope_neg) / tps) and (idx < (total_time) / tps):
         # Hold end
         sv_temp = sv_end
         print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[4])
