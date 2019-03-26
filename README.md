@@ -89,7 +89,7 @@ dmm5.set_ohmf_range(1e3)                                                # 3458D 
 
 ### Step 4
 
-Each meter triggered and readout in main loop with measurement result is saved into *meas_val[**N**]* variable. If some variables unused, often in case when less than 6 instruments used, assign them to zero instead of removing, to preserve CSV output file formatting for future use. Code related to triggering and data collection from one meter:
+Each meter triggered and readout in main loop with measurement result is saved into *meas_val[**N**]* variable. If some variables unused, often in case when less than 6 instruments used, assign them to zero instead of removing, to preserve DSV output file formatting for future use. Code related to triggering and data collection from one meter:
 
 ```
 dmm1.trigger()                         # Trigger DMM1
@@ -116,7 +116,7 @@ Some key settings:
 env_sensor     = bme280         ; none for no sensor use, or bme280 for Bosch BME280 Environment sensor (I2C)
 interface      = vxi            ; gpib for linux-gpib library to use with NI USB-GPIB-HS or **vxi** for python-vxi11 bidning for LAN-GPIB gateway
 vxi_ip         = 192.168.1.125  ; IP address of LAN-GPIB gateway like Agilent E5810A. Not used if interface set to gpib
-data_file      = tcr_res_k46_3458abd_sweep_test12_2019.csv ; This is filename to store all measurement samples.
+data_file      = tcr_res_k46_3458abd_sweep_test12_2019.dsv ; This is filename to store all measurement samples.
 ```
 
 Temperature ramp settings are available in **\[testset\]** section.
@@ -184,7 +184,7 @@ Other alternative is to repurpose small Peltier-based wine coolers in similar ma
 After successful start, app will plot simple pseudo graphics text UI to provide means of monitoring experiment progress:
 
     ╒══════════════════════════════════════════════════════════════════════════════════════════════════╕
-    │  xDevs.com TEC Experiment kit        -i- Datafile ../teckit/measure_example_jan2019.csv exists   │
+    │  xDevs.com TEC Experiment kit        -i- Datafile ../teckit/measure_example_jan2019.dsv exists   │
     ├──────────────────────────────────────────────────────────────────────────────────────────────────┤
     │    GPIB[25] : Keithley 2510                                           Progress     : 11.96%      │
     │    GPIB[10] : Keysight 3458A                                          Total points : 4806        │
@@ -227,14 +227,14 @@ TECKit can be used as simple data logger as well, without running temperature co
 
 When *no_thermal* is true, code related to the temperature controller hardware will not be executed, and only measurement instruments will be used for sampling. 
     
-All measurement values like instrument readings, ambient temperature data, meter temperatures and TEC chamber telemetry are stored in CSV-alike text file. This file have header to identify rows, such as:
+All measurement values like instrument readings, ambient temperature data, meter temperatures and TEC chamber telemetry are stored in [delimiter separated](https://en.wikipedia.org/wiki/Delimiter-separated_values) DSV format text file. This file have header to identify rows, such as:
 
     date;hp3458a;hp3458b;k6;k4;meas5;meas6;val6;temp1;temp2;amb_temp;amb_rh;amb_pressure;box_temp;nvm_temp;
 
 ## Example data, obtained from TECkit results
 
 ![Ramp image example](https://xdevs.com/doc/xDevs.com/teckit_example.png)
-[CSV-data file from this run](https://xdevs.com/doc/xDevs.com/teckit_example_2019.csv)
+[DSV-data file from this run](https://xdevs.com/doc/xDevs.com/teckit_example_2019.csv)
 
 Four instruments are used : HP 3458A GPIB 2 and 3, Keithley 2002 GPIB 4 and 6.
 Temperature control done by Keithley 2510 GPIB 25 with 40W TEC module and Honeywell HEL-705 platinum RTD sensor.
