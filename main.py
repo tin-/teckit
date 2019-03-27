@@ -16,6 +16,7 @@ import ftplib
 import numbers
 import signal
 import numpy as np
+import imp 
 from tools import *
 
 import ConfigParser
@@ -25,48 +26,23 @@ cfg.sections()
 
 print "\033[2J"
 # Device modules 
-irc_en = 0    # IRC bot activation flag
-
-root_dir = ''
-fileName4 = root_dir + cfg.get('teckit', 'data_file', 1)
-
-import imp 
-if (cfg.get('mode', 'no_thermal', 1) == "false"):
-    k2510  = imp.load_source('k2510' , 'devices/k2510.py')              # Load Keithley 2510 support
-trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
-dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-#dmm5   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-#dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-#dmm7   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
-
-#dmm2   = imp.load_source('f8508a', 'devices/f8508a.py')                 # Load support for HP3458A
-#em1    = imp.load_source('hp53131' , 'devices/hp53131a.py')             # Load support for K6517
-#dmm5   = imp.load_source('r6581t' , 'devices/r6581t.py')                # Load support for R6581T
-#ilx5910= imp.load_source('ilx5910', 'devices/ilx.py')                   # Load support for ILX 5910B
-#dmm5   = imp.load_source('k2182' , 'devices/k2182.py')                  # Load support for K2002
-#dmm6   = imp.load_source('k2182' , 'devices/k2182.py')                  # Load support for K2002
-#dmm7   = imp.load_source('k182m' , 'devices/k182m.py')                  # Load support for K182M
-#mfc    = imp.load_source('f5700', 'devices/f5700a.py')                  # Load support for F5700A
-
 ext_temp     = 0.0                                                      # Ambient BME280 temperature
 ext_rh       = 0.0                                                      # Ambient relative humidity
 ext_pressure = 0.0                                                      # Ambient pressure
+irc_en = 0                                                              # IRC bot activation flag
+
+root_dir = ''
+fileName4 = root_dir + cfg.get('teckit', 'data_file', 1)
 
 iserver = cfg.get('chatbot', 'irc_server', 1)
 ichannel = cfg.get('chatbot', 'irc_channel', 1) 
 inick = cfg.get('chatbot', 'irc_nick', 1)
 ipasswd = cfg.get('chatbot', 'irc_passwd', 1)
 
-if cfg.get('testset', 'mode', 1) == 'delta3':
-    delta_res = 3
+if cfg.get('testset', 'slope_shape', 1) == 'lymex_step':
+    slope_shape = 10 # Multi-step stage with middle point dwell from lymex idea
 else:
-    delta_res = 0
-
-if delta_res == 3:
-    mfc1   = imp.load_source('hulk', 'devices/f5720a.py')                    # Load Fluke 5720+5725 support
+    slope_shape = 0 # Simple ramp up/down operation
 
 if cfg.get('chatbot', 'irc_bot_enabled', 1) == 'true':
     irc_active = 1
@@ -94,7 +70,64 @@ else:
         ext_rh       = 0
         ext_pressure = 0    
 
-# Experiment ramp sweep settings
+if (cfg.get('mode', 'no_thermal', 1) == "false"):
+    k2510  = imp.load_source('k2510' , 'devices/k2510.py')              # Load Keithley 2510 support
+#trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
+#dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+#dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+#dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+#dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+#dmm5   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
+#dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
+#dmm7   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
+#em1    = imp.load_source('hp53131' , 'devices/hp53131a.py')             # Load support for K6517
+#dmm5   = imp.load_source('r6581t' , 'devices/r6581t.py')                # Load support for R6581T
+#ilx5910= imp.load_source('ilx5910', 'devices/ilx.py')                   # Load support for ILX 5910B
+#dmm5   = imp.load_source('k2182' , 'devices/k2182.py')                  # Load support for K2002
+#dmm6   = imp.load_source('k2182' , 'devices/k2182.py')                  # Load support for K2002
+#dmm7   = imp.load_source('k182m' , 'devices/k182m.py')                  # Load support for K182M
+#mfc    = imp.load_source('f5700', 'devices/f5700a.py')                  # Load support for F5700A
+#scan = k7168_client.THP_socket('192.168.1.114',10001)                  # External scanner
+
+#trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
+#dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
+#dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
+#dmm3 = dmm3.dmm_meter (11,0,"3458C") # GPIB 
+#dmm4 = dmm4.dmm_meter (10,0,"3458D") # GPIB 
+#dmm5 = dmm5.scpi_meter(4,0,"2002-4") # GPIB 
+#dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
+#dmm6 = dmm6.flk_meter(5,0,"8508")
+#cntr = em1.cntr(3,0,"53131A")
+#dmm5 = dmm5.scpi_meter(9,0,"6581T")
+#dmm7 = dmm7.k182m_meter(18,0,"2182")
+
+#dmm1.set_dcv_range(0.1)                                                # 3458A function/range config
+#dmm2.set_dcv_range(1)                                                # 3458B function/range config
+#dmm3.set_dcv_range(0.1)                                                # 3458C function/range config
+#dmm4.set_dcv_range(0.1)                                                # 3458D function/range config
+#dmm5.set_ohmf_range(100)                                                # K2002-4 function/range config
+#dmm6.set_ohmf_range(100)                                                # K2002-6 function/range config
+#dmm5.set_ohmf_range(200)                                                # 3458D function/range config
+#dmm6.set_tohm_range(1)                                                # F8508A function/range config
+
+# Some unused configuration code for other meters
+#dmm5.set_ohmf_range(1e3) # 6581T
+#dmm1.set_ohmf_fast_range(10e3) #2
+#dmm3.set_ohm_range(200e3) #6
+#dmm2.set_tohm_rel_range(10000) #3458-3
+#dmm2.set_dcv4w_range(10) # 3459b
+#dmm4.set_pt1000_rtd() #4
+#dmm1.set_d_range(10) #4
+#dmm2.set_dcv_range(10) #4
+
+# Module support for Delta-resistance measurement modes
+if cfg.get('testset', 'mode', 1) == 'delta3':
+    delta_res = 3
+    from delta3 import *
+else:
+    delta_res = 0
+
+# Example experiment ramp sweep settings
 '''
                Peak_temp
                ______
@@ -109,13 +142,13 @@ time_start Speed_pos / neg\  time_end
        2h     9h    2h    9h       2h
 '''
 
-cur1 = float(cfg.get('testset', 'delta_ipos', 1))
-cur2 = float(cfg.get('testset', 'delta_ineg', 1))
+cur1                = float(cfg.get('testset', 'delta_ipos', 1))        # Positive current level for Delta-resistance mode
+cur2                = float(cfg.get('testset', 'delta_ineg', 1))        # Negative current level for Delta-resistance mode
 
+tps                 = 1.0                                               # Time per step calculation variable
 sv_start            = float(cfg.get('testset', 'sv_start', 1))          # Chamber start temperature
 sv_end              = float(cfg.get('testset', 'sv_end', 1))            # Chamber end temperature
 peak_temp           = float(cfg.get('testset', 'peak_temp', 1))         # Top soak temperature
-tps                 = 1.0                                               # Time per step calculation variable
 slope_pos           = float(cfg.get('testset', 'slope_pos', 1))         # Steps for the positive slope
 slope_neg           = float(cfg.get('testset', 'slope_neg', 1))         # Steps for the negative slope
 time_start          = float(cfg.get('testset', 'time_start', 1))        # Initial hold temperature time, before positive slope starts
@@ -128,12 +161,23 @@ reference3          = float(cfg.get('dut', 'reference3', 1))            # Refere
 reference4          = float(cfg.get('dut', 'reference4', 1))            # Reference value 4
 reference5          = float(cfg.get('dut', 'reference5', 1))            # Reference value 5
 reference6          = float(cfg.get('dut', 'reference6', 1))            # Reference value 6
+reference7          = float(cfg.get('dut', 'reference7', 1))            # Reference value 7
+reference8          = float(cfg.get('dut', 'reference8', 1))            # Reference value 8
 ppm_delta           = 0.0
 ppm_delta2          = 0.0
 
 pid_kp              = float(cfg.get('pid', 'kp', 1))                    # P coefficient for thermostat controller
 pid_ki              = float(cfg.get('pid', 'ki', 1))                    # I coefficient for thermostat controller
 pid_kd              = float(cfg.get('pid', 'kd', 1))                    # D coefficient for thermostat controller
+
+if (cfg.get('mode', 'no_thermal', 1) == "false"):
+    # If thermal control activated, perform initialization for PID hardware
+    tecsmu = k2510.tec_meter(25,0,"2510")
+    tecsmu.set_tmp("%5.3f" % sv_start)
+    tecsmu.on_temp()
+    tecsmu.set_gain(pid_kp)
+    tecsmu.set_intg(pid_ki)
+    tecsmu.set_derv(pid_kd)
 
 total_time          = time_start + time_dwell + time_end + slope_pos + slope_neg # Test time, in seconds
 elapsed_time        = 0
@@ -143,16 +187,18 @@ sv_temp             = sv_start                                          # Set va
 pv_temp             = 0.0                                               # Process temperature value
 tec_curr            = 0.0                                               # TEC current monitoring
 tread               = 20                                                # Interval for reading 3458A's TEMP?
-meas_val            = 1e-6                                              # DMM1 reading
-meas_val2           = 0.0                                               # DMM2 reading
-meas_val3           = 0.0                                               # DMM3 reading
-meas_val4           = 0.0                                               # DMM4 reading
-meas_val5a          = 0.0                                               # DMM5 ch1 reading
-meas_val5b          = 0.0                                               # DMM5 ch2 reading
-meas_val6           = 0.0                                               # DMM6 reading
-dmm1_temp           = 10                                                # DMM1 TEMP? value
-dmm2_temp           = 10                                                # DMM2 TEMP? value
-#scan = k7168_client.THP_socket('192.168.1.114',10001)                  # External scanner
+meas_val            = 1e-6                                              # DUT1 reading
+meas_val2           = 0.0                                               # DUT2 reading
+meas_val3           = 0.0                                               # DUT3 reading
+meas_val4           = 0.0                                               # DUT4 reading
+meas_val5           = 0.0                                               # DUT5 reading
+meas_val6           = 0.0                                               # DUT6 reading
+meas_val7           = 0.0                                               # DUT7 reading
+meas_val8           = 0.0                                               # DUT8 reading
+dmm1_temp           = 26                                                # DMM1 TEMP? value
+dmm2_temp           = 26                                                # DMM2 TEMP? value
+dmm3_temp           = 26                                                # DMM3 TEMP? value
+dmm4_temp           = 26                                                # DMM4 TEMP? value
 
 if irc_active:
     itext = irc.get_text() 
@@ -195,53 +241,12 @@ print "\033[13;40H \033[0;36mNPLC         : %9.4f \033[0;39m" % (100)
 print "\033[11;2H \033[1;32mMin temp     : %.3f %cC\033[0;39m" % (sv_start, u"\u00b0")
 print "\033[12;2H \033[1;32mPeak temp    : %.3f %cC\033[0;39m" % (peak_temp, u"\u00b0")
 
-if (cfg.get('mode', 'no_thermal', 1) == "false"):
-    # If thermal control activated, perform initialization for PID hardware
-    tecsmu = k2510.tec_meter(25,0,"2510")
-    tecsmu.set_tmp("%5.3f" % sv_start)
-    tecsmu.on_temp()
-    tecsmu.set_gain(pid_kp)
-    tecsmu.set_intg(pid_ki)
-    tecsmu.set_derv(pid_kd)
-if (delta_res == 3):
-    mfc = mfc1.hulk(1,0,"5720")  # GPIB 1
-    print "\033[9;40H \033[1;34mDelta mode   : %d \033[0;39m" % (delta_res)
-
-trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
-dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
-dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
-dmm3 = dmm3.dmm_meter (11,0,"3458C") # GPIB 
-dmm4 = dmm4.dmm_meter (10,0,"3458D") # GPIB 
-#dmm5 = dmm5.scpi_meter(4,0,"2002-4") # GPIB 
-#dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
-#dmm6 = dmm6.flk_meter(5,0,"8508")
-#cntr = em1.cntr(3,0,"53131A")
-#dmm5 = dmm5.scpi_meter(9,0,"6581T")
-#dmm7 = dmm7.k182m_meter(18,0,"2182")
-
-dmm1.set_dcv_range(0.1)                                                # 3458A function/range config
-dmm2.set_dcv_range(1)                                                # 3458B function/range config
-dmm3.set_dcv_range(0.1)                                                # 3458C function/range config
-dmm4.set_dcv_range(0.1)                                                # 3458D function/range config
-#dmm5.set_ohmf_range(100)                                                # K2002-4 function/range config
-#dmm6.set_ohmf_range(100)                                                # K2002-6 function/range config
-#dmm5.set_ohmf_range(200)                                                # 3458D function/range config
-#dmm6.set_tohm_range(1)                                                # F8508A function/range config
-
-# Some unused configuration code for other meters
-#dmm5.set_ohmf_range(1e3) # 6581T
-#dmm1.set_ohmf_fast_range(10e3) #2
-#dmm3.set_ohm_range(200e3) #6
-#dmm2.set_tohm_rel_range(10000) #3458-3
-#dmm2.set_dcv4w_range(10) # 3459b
-#dmm4.set_pt1000_rtd() #4
-#dmm1.set_d_range(10) #4
-#dmm2.set_dcv_range(10) #4
-
 icnt = 0
 dmm1_temp = dmm1.get_temp()
 dmm2_temp = dmm2.get_temp()
-tread = 100
+dmm3_temp = dmm3.get_temp()
+dmm4_temp = dmm4.get_temp()
+tread = cfg.get('dmm', 'readtemp_period', 1)
 
 if (cfg.get('mode', 'run_acal', 1) == "true"):
     dmm1.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
@@ -266,6 +271,9 @@ sdev_arr2 = []
 sdev_arr3 = []
 sdev_arr4 = []
 sdev_arr5 = []
+sdev_arr6 = []
+sdev_arr7 = []
+sdev_arr8 = []
 
 timing_init   = time.time()
 timing_step   = 1.0
@@ -273,141 +281,7 @@ timing_step   = 1.0
 print "\033[30;5H \033[0;35mREF    A:%11.6G  B:%11.6G  C:%11.6G  D:%11.6G  E:%11.6G \033[0;39m" % (reference1, reference2, reference3, reference4, reference5)
 print "\033[36;0H"
 
-mfc.mfc_cmd("RANGELCK OFF")
-time.sleep(1)
-mfc.mfc_stby()
-mfc.mfc_cmd("OUT %.6f A;OPER" % 0.1) #Neg
-time.sleep(3)
-mfc.mfc_cmd("RANGELCK ON")
-time.sleep(1)
-mfc.mfc_cmd("OUT 0 A, 0 Hz")
-time.sleep(6)
-mfc.mfc_oper()
-time.sleep(6)
-
-zerof1 = dmm1.get_data()
-zerof2 = dmm2.get_data()
-zerof3 = dmm3.get_data()
-zerof4 = dmm4.get_data()
-time.sleep(1)
-
-print ("Zero voltage = %f uV %f uV %f uV %f uV" % ( float(zerof1) * 1e6, float(zerof2) * 1e6, float(zerof3) * 1e6, float(zerof4) * 1e6) )
-
-def delta_sample():
-    mfc.mfc_cmd("OUT %.6f A;OPER" % cur1) #Neg
-    print "\033[12;40H \033[1;34mDStage   : %s \033[0;39m" % ("Pos1")
-    time.sleep(3)
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-    meas1a = dmm1.read_val()[1]
-    meas2a = dmm2.read_val()[1]
-    meas3a = dmm3.read_val()[1]
-    meas4a = dmm4.read_val()[1]
-    time.sleep(1)
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-    meas1a = dmm1.read_val()[1]
-    meas2a = dmm2.read_val()[1]
-    meas3a = dmm3.read_val()[1]
-    meas4a = dmm4.read_val()[1]
-    time.sleep(1)
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-    meas1a += dmm1.read_val()[1]
-    meas2a += dmm2.read_val()[1]
-    meas3a += dmm3.read_val()[1]
-    meas4a += dmm4.read_val()[1]
-    meas1a = (meas1a / 2)
-    meas2a = (meas2a / 2)
-    meas3a = (meas3a / 2)
-    meas4a = (meas4a / 2)
-
-    mfc.mfc_cmd("OUT %.6f A;OPER" % cur2) #Neg
-    print "\033[12;40H \033[1;34mDStage   : %s \033[0;39m" % ("Neg1")
-    time.sleep(3)
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-    meas1b = dmm1.read_val()[1]
-    meas2b = dmm2.read_val()[1]
-    meas3b = dmm3.read_val()[1]
-    meas4b = dmm4.read_val()[1]
-    time.sleep(1)
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-    meas1b = dmm1.read_val()[1]
-    meas2b = dmm2.read_val()[1]
-    meas3b = dmm3.read_val()[1]
-    meas4b = dmm4.read_val()[1]
-    time.sleep(1)
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-    meas1b += dmm1.read_val()[1]
-    meas2b += dmm2.read_val()[1]
-    meas3b += dmm3.read_val()[1]
-    meas4b += dmm4.read_val()[1]
-    meas1b = (meas1b / 2)
-    meas2b = (meas2b / 2)
-    meas3b = (meas3b / 2)
-    meas4b = (meas4b / 2)
-
-    mfc.mfc_cmd("OUT %.6f A;OPER" % cur1) #Neg
-    print "\033[12;40H \033[1;34mDStage   : %s \033[0;39m" % ("Pos2")
-    time.sleep(3)
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-    meas1c = dmm1.read_val()[1]
-    meas2c = dmm2.read_val()[1]
-    meas3c = dmm3.read_val()[1]
-    meas4c = dmm4.read_val()[1]
-    time.sleep(1)
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-    meas1c = dmm1.read_val()[1]
-    meas2c = dmm2.read_val()[1]
-    meas3c = dmm3.read_val()[1]
-    meas4c = dmm4.read_val()[1]
-    time.sleep(1)
-    dmm1.trigger()
-    dmm2.trigger()
-    dmm3.trigger()
-    dmm4.trigger()
-    meas1c += dmm1.read_val()[1]
-    meas2c += dmm2.read_val()[1]
-    meas3c += dmm3.read_val()[1]
-    meas4c += dmm4.read_val()[1]        
-    meas1c = (meas1c / 2)
-    meas2c = (meas2c / 2)
-    meas3c = (meas3c / 2)
-    meas4c = (meas4c / 2)
-
-    calc_resa = ( ( (meas1a - zerof1) - 2*(meas1b - zerof1) + (meas1c - zerof1) ) / 4) / cur1
-    print "\033[12;40H \033[1;34mDVal %.8f \033[0;39m" % float(calc_resa)
-    calc_resb = ( ( (meas2a - zerof2) - 2*(meas2b - zerof2) + (meas2c - zerof2) ) / 4) / cur1
-    calc_resc = ( ( (meas3a - zerof3) - 2*(meas3b - zerof3) + (meas3c - zerof3) ) / 4) / cur1
-    calc_resd = ( ( (meas4a - zerof4) - 2*(meas4b - zerof4) + (meas4c - zerof4) ) / 4) / cur1
-
-    #print emvals
-    #meas_val  = calc_resa #float(emvals[0])#val()[1]
-    #meas_val2 = calc_resb #float(emvals[1])#dmm3.read_val()[1]
-    #meas_val3 = calc_resc #float(emvals[2])#dmm3.read_val()[1]
-    #meas_val4 = calc_resd #float(emvals[3])#(meas_val + meas_val3 - (2 * meas_val2) ) / 4
-    return calc_resa, calc_resb, calc_resc, calc_resd, meas1a, meas1b, meas1c
+middle_dwell_count = 0
 
 # Main ramp loop
 while (idx <= (total_time / tps) ):
@@ -445,6 +319,11 @@ while (idx <= (total_time / tps) ):
 
     temp_pslope = peak_temp - sv_temp
     dur_pslope = 1
+    if slope_shape == 10:
+        # Calculate multi-step parameters
+        middle_dwell_time = (float(time_start) / tps )
+        middle_dwell_temp = sv_start + ((peak_temp - sv_start) / 2)
+        
     # Sample and mode sequencer
     if (idx <= (float(time_start) / tps )):
         # Holding for start
@@ -456,11 +335,28 @@ while (idx <= (total_time / tps) ):
         dur_pslope = float((time_start + slope_pos) / tps) - float((time_start / tps ) )
         #print "\033[55;2H TEMP PSLOPE %f" % temp_pslope
         #print "\033[56;2H DUR PSLOPE %f" % ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
-        sv_temp = sv_start + ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
-        print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[1])
+        if slope_shape == 10:
+            print middle_dwell_temp
+            print sv_temp
+            print middle_dwell_count
+            print idx
+            if ((middle_dwell_temp - 0.1) <= sv_temp < (middle_dwell_temp + 0.1)) and (middle_dwell_count < middle_dwell_time):
+                middle_dwell_count = middle_dwell_count + 1 
+                idx = idx - 1
+                sv_temp = middle_dwell_temp
+                print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[7])
+            else:
+                # Continue as normal if step dwell temp not reached
+                sv_temp = sv_start + ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
+                print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[1])
+        else:            
+            sv_temp = sv_start + ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
+            print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[1])
     elif (idx >= ((time_start + slope_pos) / tps)) and (idx < ((time_start + slope_pos + time_dwell) / tps)):
         # Start peak hold temp
         sv_temp = peak_temp
+        if slope_shape == 10:
+            middle_dwell_count = 0
         print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[2])
     elif (idx >= ((time_start + slope_pos + time_dwell) / tps)) and (idx < ((time_start + slope_pos + time_dwell + slope_neg) / tps)):
         # Ramp down
@@ -468,8 +364,19 @@ while (idx <= (total_time / tps) ):
         dur_nslope = float((time_start + time_dwell + slope_pos) / tps) - float((time_start + slope_pos + time_dwell + slope_neg) / tps )
         #print "\033[55;2H TEMP NSLOPE %f" % temp_nslope
         #print "\033[56;2H DUR NSLOPE %f" % dur_nslope
-        sv_temp = peak_temp + ( (temp_nslope / dur_nslope) * (idx - (((time_start + time_dwell + slope_neg) / tps)) ) )
-        print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[3])
+        if slope_shape == 10:
+            if ((middle_dwell_temp - 0.1) <= sv_temp < (middle_dwell_temp + 0.1)) and (middle_dwell_count < middle_dwell_time):
+                middle_dwell_count = middle_dwell_count + 1 
+                idx = idx - 1
+                sv_temp = middle_dwell_temp
+                print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[8])
+            else:
+                # Continue as normal if step dwell temp not reached
+                sv_temp = peak_temp + ( (temp_nslope / dur_nslope) * (idx - (((time_start + time_dwell + slope_neg) / tps)) ) )
+                print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[3])
+        else:            
+            sv_temp = peak_temp + ( (temp_nslope / dur_nslope) * (idx - (((time_start + time_dwell + slope_neg) / tps)) ) )
+            print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[3])
     elif (idx >= (time_start + slope_pos + time_dwell + slope_neg) / tps) and (idx < (total_time) / tps):
         # Hold end
         sv_temp = sv_end
@@ -493,42 +400,44 @@ while (idx <= (total_time / tps) ):
         pv_temp = 0.0
         tec_curr = 0.0
 
-    nvm_temp = trm1.get_data() #CHUB
+    nvm_temp = sv_temp#trm1.get_data() #CHUB
 
     # Trigger instruments to start conversion in normal mode
     if (delta_res == 0):
         dmm1.trigger()
-	dmm2.trigger()
+        dmm2.trigger()
         dmm3.trigger()
-	dmm4.trigger()
+        dmm4.trigger()
         #dmm5.trigger()
-	#dmm6.trigger()
+        #dmm6.trigger()
         # Collect measurement results
-	meas_val  = dmm1.read_val()[1]
-	meas_val2 = dmm2.read_val()[1]
-        meas_val3 = 0#dmm3.read_val()[1]
-        meas_val4 = 0#dmm4.read_val()[1]
-        meas_val5a = 0#dmm5.read_val()[1]
-        meas_val5b = 0#dmm6.get_data()
-        meas_val6 = 0#
+        meas_val  = dmm1.read_val()[1]
+        meas_val2 = dmm2.read_val()[1]
+        meas_val3 = dmm3.read_val()[1]
+        meas_val4 = dmm4.read_val()[1]
+        meas_val5 = 0#dmm5.read_val()[1]
+        meas_val6 = 0#dmm6.get_data()
+        meas_val7 = 0#  
+        meas_val8 = 0#
     
     elif (delta_res == 3):
         # Collect delta measurement
-	meas_val, meas_val2, meas_val3, meas_val4, meas_val5a, meas_val5b, meas_val6 = delta_sample() 
+        meas_val, meas_val2, meas_val3, meas_val4, meas_val5, meas_val6, meas_val7 = delta_sample() 
 
     # Add results to array for stats math
     sdev_arr1.extend([meas_val])
     sdev_arr2.extend([meas_val2])
     sdev_arr3.extend([meas_val3])
     sdev_arr4.extend([meas_val4])
-    sdev_arr5.extend([meas_val5a])
-
+    sdev_arr5.extend([meas_val5])
 
     tread = tread - 1
     if (tread == 0):
         dmm1_temp = dmm1.get_temp()
         dmm2_temp = dmm2.get_temp()
-        tread = 100
+        dmm3_temp = dmm3.get_temp()
+        dmm4_temp = dmm4.get_temp()
+        tread = cfg.get('dmm', 'readtemp_period', 1)
 
     print "\033[9;88H \033[0;32m%2.3f %cC\033[0;39m" % (sv_temp, u"\u00b0")
     print "\033[10;88H \033[1;32m%2.3f %cC\033[0;39m" % (pv_temp, u"\u00b0")
@@ -551,9 +460,10 @@ while (idx <= (total_time / tps) ):
     ppm_delta2 = ((meas_val2 / reference2) - 1) * 1e6
     ppm_delta3 = ((meas_val3 / reference3) - 1) * 1e6
     ppm_delta4 = ((meas_val4 / reference4) - 1) * 1e6
-    ppm_delta5a= ((meas_val5a / reference5) - 1) * 1e6
-    ppm_delta5b= ((meas_val5b / reference5) - 1) * 1e6
-    ppm_delta6 = ((meas_val6 / reference5) - 1) * 1e6
+    ppm_delta5 = ((meas_val5 / reference5) - 1) * 1e6
+    ppm_delta6 = ((meas_val6 / reference6) - 1) * 1e6
+    ppm_delta7 = ((meas_val7 / reference7) - 1) * 1e6
+    ppm_delta8 = ((meas_val8 / reference8) - 1) * 1e6
     print "\033[33;13H\033[1;32m %9.3f\033[0;39m" % (ppm_delta)
     print "\033[33;30H\033[1;33m %9.3f\033[0;39m" % (ppm_delta2)
     print "\033[33;47H\033[1;34m %9.3f\033[0;39m" % (ppm_delta3)
@@ -568,12 +478,12 @@ while (idx <= (total_time / tps) ):
     print ("\033[%d;3H[%6d] S%5.3f P%5.3f T%5.3f \033[1;34m A%12.9e \033[0;32mB%12.9e \033[0;33mC%12.9e C\033[0;39m" % (icnt+17, idx, sv_temp, pv_temp, nvm_temp, meas_val, meas_val2, meas_val3) ) 
     icnt = icnt + 1
     if irc_active:
-	itext = irc.get_text() 
+        itext = irc.get_text() 
         irc.write_text(ichannel, "Data: %.8f %.8f %.8f %.8f %.8f F1529: %.3f Ambient: %.2fC" % (meas_val, meas_val2, meas_val3, meas_val4, meas_val6, float(nvm_temp), ext_temp ) )
 
     with open(fileName4, 'a') as o1:  # Open file handles for storing values
-        o1.write (time.strftime("%d/%m/%Y-%H:%M:%S;") + ("%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%3.1f;%3.1f;%3.3f;%3.1f;%4.1f;%3.3f;%3.3f;\n" % \
-(float(meas_val),float(meas_val2),float(meas_val3),float(meas_val4),float(meas_val5a),float(meas_val5b),float(meas_val6), float(dmm1_temp), float(dmm2_temp),ext_temp,ext_rh,ext_pressure,pv_temp, float(nvm_temp)) ) )
+        o1.write (time.strftime("%d/%m/%Y-%H:%M:%S;") + ("%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%3.1f;%3.1f;%3.1f;%3.1f;%3.3f;%3.1f;%4.1f;%3.3f;%3.3f;\n" % \
+(float(meas_val),float(meas_val2),float(meas_val3),float(meas_val4),float(meas_val5),float(meas_val6),float(meas_val7),float(meas_val8), float(dmm1_temp), float(dmm2_temp),float(dmm3_temp),float(dmm4_temp),ext_temp,ext_rh,ext_pressure,pv_temp, float(nvm_temp)) ) )
         sys.stdout.flush()
         o1.close()
     
@@ -582,4 +492,3 @@ while (idx <= (total_time / tps) ):
     if (idx == 1):
         timing_step  = float(timing_init) - float(time.time())  # Determine duration of one data sample step
     idx+=1                  # Sample index increment
-
