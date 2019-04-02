@@ -34,6 +34,9 @@ irc_en = 0                                                              # IRC bo
 root_dir = ''
 fileName4 = root_dir + cfg.get('teckit', 'data_file', 1)
 
+create_local_file(fileName4)
+plot_ui()
+
 iserver = cfg.get('chatbot', 'irc_server', 1)
 ichannel = cfg.get('chatbot', 'irc_channel', 1) 
 inick = cfg.get('chatbot', 'irc_nick', 1)
@@ -73,13 +76,13 @@ else:
 if (cfg.get('mode', 'no_thermal', 1) == "false"):
     k2510  = imp.load_source('k2510' , 'devices/k2510.py')              # Load Keithley 2510 support
 #trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
-#dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-#dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-#dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-#dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 #dmm5   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
 #dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-#dmm7   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
+dmm5   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
 #em1    = imp.load_source('hp53131' , 'devices/hp53131a.py')             # Load support for K6517
 #dmm5   = imp.load_source('r6581t' , 'devices/r6581t.py')                # Load support for R6581T
 #ilx5910= imp.load_source('ilx5910', 'devices/ilx.py')                   # Load support for ILX 5910B
@@ -90,22 +93,22 @@ if (cfg.get('mode', 'no_thermal', 1) == "false"):
 #scan = k7168_client.THP_socket('192.168.1.114',10001)                  # External scanner
 
 #trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
-#dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
-#dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
-#dmm3 = dmm3.dmm_meter (11,0,"3458C") # GPIB 
-#dmm4 = dmm4.dmm_meter (10,0,"3458D") # GPIB 
+dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
+dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
+dmm3 = dmm3.dmm_meter (11,0,"3458C") # GPIB 
+dmm4 = dmm4.dmm_meter (10,0,"3458D") # GPIB 
 #dmm5 = dmm5.scpi_meter(4,0,"2002-4") # GPIB 
 #dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
-#dmm6 = dmm6.flk_meter(5,0,"8508")
+dmm5 = dmm5.flk_meter(5,0,"8508")
 #cntr = em1.cntr(3,0,"53131A")
 #dmm5 = dmm5.scpi_meter(9,0,"6581T")
 #dmm7 = dmm7.k182m_meter(18,0,"2182")
 
-#dmm1.set_dcv_range(0.1)                                                # 3458A function/range config
-#dmm2.set_dcv_range(1)                                                # 3458B function/range config
-#dmm3.set_dcv_range(0.1)                                                # 3458C function/range config
-#dmm4.set_dcv_range(0.1)                                                # 3458D function/range config
-#dmm5.set_ohmf_range(100)                                                # K2002-4 function/range config
+dmm1.set_dcv_range(10)                                                # 3458A function/range config
+dmm2.set_dcv_range(10)                                                # 3458B function/range config
+dmm3.set_dcv_range(10)                                                # 3458C function/range config
+dmm4.set_dcv_range(10)                                                # 3458D function/range config
+dmm5.set_dcv_range(10)                                                # K2002-4 function/range config
 #dmm6.set_ohmf_range(100)                                                # K2002-6 function/range config
 #dmm5.set_ohmf_range(200)                                                # 3458D function/range config
 #dmm6.set_tohm_range(1)                                                # F8508A function/range config
@@ -212,11 +215,9 @@ dc, dh = 8, 1000;
 tsp_data = [[0 for x in range(dc)] for y in range(dh)] 
 
 delay_start = int(cfg.get('testset', 'delay_start', 1))                 # Hold delay in seconds
-print "\033[1;1H-i- Waiting for delayed start %d seconds" % delay_start
-dormant(delay_start)
-
-create_local_file(fileName4)
-plot_ui()
+if (delay_start != 0):
+    print "\033[1;1H-i- Waiting for delayed start %d seconds" % delay_start
+    dormant(delay_start)
 
 if irc_active:
     itext = irc.get_text() 
@@ -246,7 +247,7 @@ dmm1_temp = dmm1.get_temp()
 dmm2_temp = dmm2.get_temp()
 dmm3_temp = dmm3.get_temp()
 dmm4_temp = dmm4.get_temp()
-tread = cfg.get('dmm', 'readtemp_period', 1)
+tread = int(cfg.get('dmm', 'readtemp_period', 1))
 
 if (cfg.get('mode', 'run_acal', 1) == "true"):
     dmm1.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
@@ -415,7 +416,7 @@ while (idx <= (total_time / tps) ):
         meas_val2 = dmm2.read_val()[1]
         meas_val3 = dmm3.read_val()[1]
         meas_val4 = dmm4.read_val()[1]
-        meas_val5 = 0#dmm5.read_val()[1]
+        meas_val5 = dmm5.get_data()
         meas_val6 = 0#dmm6.get_data()
         meas_val7 = 0#  
         meas_val8 = 0#
@@ -437,7 +438,7 @@ while (idx <= (total_time / tps) ):
         dmm2_temp = dmm2.get_temp()
         dmm3_temp = dmm3.get_temp()
         dmm4_temp = dmm4.get_temp()
-        tread = cfg.get('dmm', 'readtemp_period', 1)
+        tread = int(cfg.get('dmm', 'readtemp_period', 1))
 
     print "\033[9;88H \033[0;32m%2.3f %cC\033[0;39m" % (sv_temp, u"\u00b0")
     print "\033[10;88H \033[1;32m%2.3f %cC\033[0;39m" % (pv_temp, u"\u00b0")
@@ -468,9 +469,9 @@ while (idx <= (total_time / tps) ):
     print "\033[33;30H\033[1;33m %9.3f\033[0;39m" % (ppm_delta2)
     print "\033[33;47H\033[1;34m %9.3f\033[0;39m" % (ppm_delta3)
     print "\033[33;66H\033[1;35m %9.3f\033[0;39m" % (ppm_delta4)
-    print "\033[33;81H\033[1;36m %9.3f ppm\033[0;39m" % (ppm_delta5a)
-    #print "\033[47;43H\033[1;34m%11.3f\033[0;39m" % (ppm_delta5b)
-    #print "\033[48;43H\033[1;34m%11.3f\033[0;39m" % (ppm_delta5b)
+    print "\033[33;81H\033[1;36m %9.3f ppm\033[0;39m" % (ppm_delta5)
+    #print "\033[47;43H\033[1;34m%11.3f\033[0;39m" % (ppm_delta6)
+    #print "\033[48;43H\033[1;34m%11.3f\033[0;39m" % (ppm_delta7)
     
     # Data storage logic goes here
     if (icnt >= 12):

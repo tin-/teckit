@@ -71,7 +71,7 @@ class dmm_meter():
             self.inst.timeout = 180
         self.refhp = refhp
         self.name = name
-        self.init_inst_fres()
+        self.init_inst()
         #self.init_inst()
 
     def init_inst(self):
@@ -135,7 +135,7 @@ class dmm_meter():
 
     def set_dcv_range(self,cmd):
 	self.inst.write("DCV %g" % cmd)
-        self.inst.write("NPLC 200")
+        self.inst.write("NPLC 100")
         self.inst.write("NDIG 9")
         self.inst.write("DELAY 0")
 

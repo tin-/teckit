@@ -59,7 +59,7 @@ class flk_meter():
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
-            self.inst = vxi11.Instrument('192.168.1.118', "gpib0,%d" % self.gpib) # VXI link
+            self.inst = vxi11.Instrument(cfg.get('teckit', 'vxi_ip', 1), "gpib0,%d" % self.gpib) # VXI link
             self.inst.timeout = 180
         self.reflevel = reflevel
         self.name = name

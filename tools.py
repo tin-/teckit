@@ -47,10 +47,10 @@ def create_local_file(fileName):
     """ Check if file exists, if not create it and add header """
     if (os.path.isfile(fileName) == False):
         with open(fileName, 'a') as o:
-            o.write("-i- %s" % cfg.get('testset', 'testname', 1))
-            o.write("-i- %s" % cfg.get('testset', 'testdut', 1))            
-            o.write("-i- %s" % cfg.get('testset', 'testnotes', 1))
-            o.write("date;val1;val2;val3;val4;val5;val6;val7;val8;temp1;temp2;temp3;temp4;amb_temp;amb_rh;amb_pressure;box_temp;nvm_temp;\r\n")
+            #o.write("-i- %s;\n" % cfg.get('testset', 'testname', 1))
+            #o.write("-i- %s;\n" % cfg.get('testset', 'testdut', 1))            
+            #o.write("-i- %s;\n" % cfg.get('testset', 'testnotes', 1))
+            o.write("date;val1;val2;val3;val4;val5;val6;val7;val8;temp1;temp2;temp3;temp4;amb_temp;amb_rh;amb_pressure;box_temp;nvm_temp;\n")
             print ("\033[2;40H-i- DataFile %s does not exist\r\n" % fileName) 
     else: 
         print ("\033[2;40H-i- Datafile %s exists\r\n" % fileName)
