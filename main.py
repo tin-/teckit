@@ -75,14 +75,14 @@ else:
 
 if (cfg.get('mode', 'no_thermal', 1) == "false"):
     k2510  = imp.load_source('k2510' , 'devices/k2510.py')              # Load Keithley 2510 support
-#trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
+trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
 dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+#dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+#dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 #dmm5   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
 #dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-dmm5   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
+#dmm7   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
 #em1    = imp.load_source('hp53131' , 'devices/hp53131a.py')             # Load support for K6517
 #dmm5   = imp.load_source('r6581t' , 'devices/r6581t.py')                # Load support for R6581T
 #ilx5910= imp.load_source('ilx5910', 'devices/ilx.py')                   # Load support for ILX 5910B
@@ -92,23 +92,23 @@ dmm5   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load F
 #mfc    = imp.load_source('f5700', 'devices/f5700a.py')                  # Load support for F5700A
 #scan = k7168_client.THP_socket('192.168.1.114',10001)                  # External scanner
 
-#trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
+trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
 dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
 dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
-dmm3 = dmm3.dmm_meter (11,0,"3458C") # GPIB 
-dmm4 = dmm4.dmm_meter (10,0,"3458D") # GPIB 
+#dmm3 = dmm3.dmm_meter (11,0,"3458C") # GPIB 
+#dmm4 = dmm4.dmm_meter (10,0,"3458D") # GPIB 
 #dmm5 = dmm5.scpi_meter(4,0,"2002-4") # GPIB 
 #dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
-dmm5 = dmm5.flk_meter(5,0,"8508")
+#dmm7 = dmm7.flk_meter(5,0,"8508")
 #cntr = em1.cntr(3,0,"53131A")
 #dmm5 = dmm5.scpi_meter(9,0,"6581T")
 #dmm7 = dmm7.k182m_meter(18,0,"2182")
 
-dmm1.set_dcv_range(10)                                                # 3458A function/range config
-dmm2.set_dcv_range(10)                                                # 3458B function/range config
-dmm3.set_dcv_range(10)                                                # 3458C function/range config
-dmm4.set_dcv_range(10)                                                # 3458D function/range config
-dmm5.set_dcv_range(10)                                                # K2002-4 function/range config
+dmm1.set_dcv_range(0.1)                                                # 3458A function/range config
+dmm2.set_dcv_range(0.10)                                                # 3458B function/range config
+#dmm3.set_dcv_range(0.10)                                                # 3458C function/range config
+#dmm4.set_dcv_range(0.10)                                                # 3458D function/range config
+#dmm7.set_dcv_range(0.10)                                                # K2002-4 function/range config
 #dmm6.set_ohmf_range(100)                                                # K2002-6 function/range config
 #dmm5.set_ohmf_range(200)                                                # 3458D function/range config
 #dmm6.set_tohm_range(1)                                                # F8508A function/range config
@@ -245,15 +245,15 @@ print "\033[12;2H \033[1;32mPeak temp    : %.3f %cC\033[0;39m" % (peak_temp, u"\
 icnt = 0
 dmm1_temp = dmm1.get_temp()
 dmm2_temp = dmm2.get_temp()
-dmm3_temp = dmm3.get_temp()
-dmm4_temp = dmm4.get_temp()
+dmm3_temp = 0#dmm3.get_temp()
+dmm4_temp = 0#dmm4.get_temp()
 tread = int(cfg.get('dmm', 'readtemp_period', 1))
 
 if (cfg.get('mode', 'run_acal', 1) == "true"):
     dmm1.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
     dmm2.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
-    dmm3.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
-    dmm4.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
+    #dmm3.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
+    #dmm4.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
     print "\033[18;3H-i- Started ACAL ALL for 860 seconds"
     dormant(860)
     total_time = total_time + 860
@@ -261,8 +261,8 @@ if (cfg.get('mode', 'run_acal', 1) == "true"):
 if (cfg.get('mode', 'run_acal_dcv', 1) == "true"):
     dmm1.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
     dmm2.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
-    dmm3.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
-    dmm4.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
+    #dmm3.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
+    #dmm4.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
     print "\033[18;3H-i- Started ACAL DCV for 150 seconds"
     dormant(150)
     total_time = total_time + 150
@@ -337,10 +337,6 @@ while (idx <= (total_time / tps) ):
         #print "\033[55;2H TEMP PSLOPE %f" % temp_pslope
         #print "\033[56;2H DUR PSLOPE %f" % ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
         if slope_shape == 10:
-            print middle_dwell_temp
-            print sv_temp
-            print middle_dwell_count
-            print idx
             if ((middle_dwell_temp - 0.1) <= sv_temp < (middle_dwell_temp + 0.1)) and (middle_dwell_count < middle_dwell_time):
                 middle_dwell_count = middle_dwell_count + 1 
                 idx = idx - 1
@@ -401,7 +397,7 @@ while (idx <= (total_time / tps) ):
         pv_temp = 0.0
         tec_curr = 0.0
 
-    nvm_temp = sv_temp#trm1.get_data() #CHUB
+    nvm_temp = trm1.get_data() #CHUB
 
     # Trigger instruments to start conversion in normal mode
     if (delta_res == 0):
@@ -416,9 +412,9 @@ while (idx <= (total_time / tps) ):
         meas_val2 = dmm2.read_val()[1]
         meas_val3 = dmm3.read_val()[1]
         meas_val4 = dmm4.read_val()[1]
-        meas_val5 = dmm5.get_data()
-        meas_val6 = 0#dmm6.get_data()
-        meas_val7 = 0#  
+        meas_val5 = 0# dmm5.get_data()
+        meas_val6 = dmm6.get_data()
+        meas_val7 = dmm7.get_data()
         meas_val8 = 0#
     
     elif (delta_res == 3):
@@ -431,13 +427,14 @@ while (idx <= (total_time / tps) ):
     sdev_arr3.extend([meas_val3])
     sdev_arr4.extend([meas_val4])
     sdev_arr5.extend([meas_val5])
+    sdev_arr6.extend([meas_val5])
 
     tread = tread - 1
     if (tread == 0):
         dmm1_temp = dmm1.get_temp()
         dmm2_temp = dmm2.get_temp()
-        dmm3_temp = dmm3.get_temp()
-        dmm4_temp = dmm4.get_temp()
+        dmm3_temp = 0#dmm3.get_temp()
+        dmm4_temp = 0#dmm4.get_temp()
         tread = int(cfg.get('dmm', 'readtemp_period', 1))
 
     print "\033[9;88H \033[0;32m%2.3f %cC\033[0;39m" % (sv_temp, u"\u00b0")

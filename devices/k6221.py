@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/k2002.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
-# xDevs.com Keithley 2002 module
+# $Id: devices/k6221.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
+# xDevs.com Keithley 6221 module
 # Copyright (c) 2012-2019, xDevs.com
 # 
 # Python 2.7 | RPi3 
@@ -47,7 +47,7 @@ class Timeout():
   def raise_timeout(self, *args):
     raise Timeout.Timeout()
 
-class scpi_meter():
+class csrc():
     temp = 38.5
     data = ""
     status_flag = 1
@@ -55,7 +55,7 @@ class scpi_meter():
 
     def __init__(self,gpib,reflevel,name):
         self.gpib = gpib
-	print "\033[6;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keithley 2002\033[0;39m" % self.gpib
+	print "\033[7;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keithley 6221\033[0;39m" % self.gpib
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
@@ -81,8 +81,17 @@ class scpi_meter():
 
     def init_inst_dummy(self):
         # Setup SCPI DMM
-	self.inst.write("*CLR")
+	self.inst.write("*RST")
+	self.inst.write("CLE")
         self.inst.write(":FORM:ELEM READ")
+	self.inst.write(":CURR:RANG 100e-3")
+	self.inst.write(":CURR:RANG:AUTO OFF")
+	self.inst.write(":CURR:COMP 10")
+	self.inst.write(":CURR:FILT ON")
+	self.inst.write(":OUTP:LTE OFF")
+	self.inst.write(":OUTP:ISH GUAR")
+	self.inst.write(":OUTP:RESP FAST")
+	self.inst.write(":OUTP OFF")
 	time.sleep(0.1)
 
     def init_inst(self):
@@ -92,14 +101,6 @@ class scpi_meter():
 	self.inst.write("*CLR")
         self.inst.write(":SYST:AZER:TYPE SYNC")
         self.inst.write(":SYST:LSYN:STAT ON")
-	#self.inst.write(":sens:temp:tran rtd")      #select thermistor
-	#self.inst.write(":sens:temp:rtd:type user") #10 kOhm thermistor
-	#self.inst.write(":sens:temp:rtd:alph 0.00375") #10 kOhm thermistor
-	#self.inst.write(":sens:temp:rtd:beta 0.160") #10 kOhm thermistor
-	#self.inst.write(":sens:temp:rtd:delt 1.605") #10 kOhm thermistor
-	#self.inst.write(":sens:temp:rtd:rzer 1000") #10 kOhm thermistor
-        #self.inst.write(":SENS:FUNC 'TEMP'")
-        #self.inst.write(":SENS:TEMP:DIG 7")
         #self.inst.write(":SENS:TEMP:NPLC 10")
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
 	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
@@ -110,33 +111,21 @@ class scpi_meter():
 #        self.inst.write(":DISP:WIND2:TEXT:DATA \"               \";STAT ON;")
 #        #kei.write("READ?")
 
-    def set_pt1000_rtd(self):
-	self.inst.write(":sens:temp:tran rtd")      #select thermistor
-	self.inst.write(":sens:temp:rtd:type user") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:alph 0.00375") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:beta 0.160") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:delt 1.605") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:rzer 1000") #10 kOhm thermistor
-        self.inst.write(":SENS:FUNC 'TEMP'")
-        self.inst.write(":SENS:TEMP:DIG 7")
-        self.inst.write(":SENS:TEMP:NPLC 10")
+    def set_range(self,cmd):
+	self.inst.write(":CURR:RANG:AUTO OFF")
+	self.inst.write(":CURR:RANG %.5e" % float(cmd))
 
-    def set_ohmf_range(self,cmd):
+    def set_output(self,cmd):
         # Setup SCPI DMM
-	self.inst.write(":SENS:FUNC 'FRES'")
-	self.inst.write(":SENS:FRES:DIG 9;NPLC 50;AVER:COUN 10;TCON MOV")
-	if (float(cmd)) <= 21e3:
-	    self.inst.write(":SENS:FRES:OCOM ON")
-	else:
-	    self.inst.write(":SENS:FRES:OCOM OFF")
-	self.inst.write(":SENS:FRES:RANG %.2f" % cmd)
+	self.inst.write(":CURR %.5e" % float(cmd))
 
-    def set_ohm_range(self,cmd):
+    def out_en(self):
         # Setup SCPI DMM
-	self.inst.write(":SENS:FUNC 'RES'")
-	self.inst.write(":SENS:RES:DIG 9;NPLC 30;AVER:COUN 10;TCON MOV")
-	self.inst.write(":SENS:RES:OCOM OFF")
-	self.inst.write(":SENS:RES:RANG %.2f" % cmd)
+	self.inst.write("OUTP ON")
+
+    def out_dis(self):
+        # Setup SCPI DMM
+	self.inst.write("OUTP OFF")
 
     def set_dcv_range(self,cmd):
         # Setup SCPI DMM
