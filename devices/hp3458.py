@@ -220,3 +220,8 @@ class dmm_meter():
         #self.inst.write("DISP ON, \"   \"")
 	#self.inst.write("DISP OFF, \" \"")
 	#self.inst.write("DISP OFF, \"%9.8f VREF \"" % float(self.data))
+
+    def disp_msg(self, cmd):
+        self.inst.write("DISP MSG, \"%s\"" % cmd[:16])
+	#self.inst.write("DISP OFF, \" \"")
+	#self.inst.write("DISP OFF, \"%9.8f VREF \"" % float(self.data))

@@ -47,7 +47,7 @@ class Timeout():
   def raise_timeout(self, *args):
     raise Timeout.Timeout()
 
-class csrc():
+class usrc():
     temp = 38.5
     data = ""
     status_flag = 1
@@ -55,7 +55,7 @@ class csrc():
 
     def __init__(self,gpib,reflevel,name):
         self.gpib = gpib
-	print "\033[7;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keithley 6221\033[0;39m" % self.gpib
+	print "\033[5;5H \033[0;31mGPIB[\033[1m%2d\033[0;35m] : HP 3245A\033[0;39m" % self.gpib
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
@@ -81,17 +81,10 @@ class csrc():
 
     def init_inst_dummy(self):
         # Setup SCPI DMM
-	self.inst.write("*RST")
-	self.inst.write("CLE")
-        self.inst.write(":FORM:ELEM READ")
-	self.inst.write(":CURR:RANG 100e-3")
-	self.inst.write(":CURR:RANG:AUTO OFF")
-	self.inst.write(":CURR:COMP 10")
-	self.inst.write(":CURR:FILT ON")
-	self.inst.write(":OUTP:LTE ON")
-	self.inst.write(":OUTP:ISH GUAR")
-	self.inst.write(":OUTP:RESP SLOW")
-	self.inst.write(":OUTP OFF")
+	self.inst.write("RST")
+        self.inst.write("APPLY DCV 0")
+	self.inst.write("IMP 0")
+	self.inst.write("DCRES HIGH")
 	time.sleep(0.1)
 
     def init_inst(self):
@@ -115,17 +108,19 @@ class csrc():
 	self.inst.write(":CURR:RANG:AUTO OFF")
 	self.inst.write(":CURR:RANG %.5e" % float(cmd))
 
-    def set_output(self,cmd):
+    def set_output_dci(self,cmd):
         # Setup SCPI DMM
-	self.inst.write(":CURR %.5e" % float(cmd))
+	self.inst.write("APPLY DCI %.6e" % float(cmd))
 
     def out_en(self):
         # Setup SCPI DMM
-	self.inst.write("OUTP ON")
+	#self.inst.write("OUTP ON")
+	time.sleep(0.01)
 
     def out_dis(self):
         # Setup SCPI DMM
-	self.inst.write("OUTP OFF")
+	time.sleep(0.01)
+	#self.inst.write("OUTP OFF")
 
     def set_dcv_range(self,cmd):
         # Setup SCPI DMM

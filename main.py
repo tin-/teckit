@@ -78,11 +78,11 @@ if (cfg.get('mode', 'no_thermal', 1) == "false"):
 trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
 dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-#dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 #dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+#dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
 #dmm5   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-#dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-#dmm7   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
+dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
+dmm7   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
 #em1    = imp.load_source('hp53131' , 'devices/hp53131a.py')             # Load support for K6517
 #dmm5   = imp.load_source('r6581t' , 'devices/r6581t.py')                # Load support for R6581T
 #ilx5910= imp.load_source('ilx5910', 'devices/ilx.py')                   # Load support for ILX 5910B
@@ -95,21 +95,21 @@ dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load K
 trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
 dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
 dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
-#dmm3 = dmm3.dmm_meter (11,0,"3458C") # GPIB 
-#dmm4 = dmm4.dmm_meter (10,0,"3458D") # GPIB 
+#dmm4 = dmm4.dmm_meter (11,0,"3458C") # GPIB 
+#dmm3 = dmm3.dmm_meter (10,0,"3458D") # GPIB 
 #dmm5 = dmm5.scpi_meter(4,0,"2002-4") # GPIB 
-#dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
-#dmm7 = dmm7.flk_meter(5,0,"8508")
+dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
+dmm7 = dmm7.flk_meter(5,0,"8508")
 #cntr = em1.cntr(3,0,"53131A")
 #dmm5 = dmm5.scpi_meter(9,0,"6581T")
 #dmm7 = dmm7.k182m_meter(18,0,"2182")
 
-dmm1.set_dcv_range(0.1)                                                # 3458A function/range config
-dmm2.set_dcv_range(0.10)                                                # 3458B function/range config
-#dmm3.set_dcv_range(0.10)                                                # 3458C function/range config
-#dmm4.set_dcv_range(0.10)                                                # 3458D function/range config
-#dmm7.set_dcv_range(0.10)                                                # K2002-4 function/range config
-#dmm6.set_ohmf_range(100)                                                # K2002-6 function/range config
+dmm1.set_ohmf_range(100e3)                                                # 3458A function/range config
+dmm2.set_ohmf_range(10e3)                                                # 3458B function/range config
+#dmm3.set_dci_range(0.10)                                                # 3458C function/range config
+#dmm4.set_dcv_range(10)                                                # 3458D function/range config
+dmm6.set_ohmf_range(200)                                                # K2002-6 function/range config
+dmm7.set_ohmf_range(75e3)                                                # K2002-4 function/range config
 #dmm5.set_ohmf_range(200)                                                # 3458D function/range config
 #dmm6.set_tohm_range(1)                                                # F8508A function/range config
 
@@ -156,6 +156,7 @@ slope_pos           = float(cfg.get('testset', 'slope_pos', 1))         # Steps 
 slope_neg           = float(cfg.get('testset', 'slope_neg', 1))         # Steps for the negative slope
 time_start          = float(cfg.get('testset', 'time_start', 1))        # Initial hold temperature time, before positive slope starts
 time_dwell          = float(cfg.get('testset', 'time_dwell', 1))        # Dwell temperature duration once reached peak_temp soak
+time_hold           = float(cfg.get('testset', 'time_hold', 1))         # Dwell temperature duration once reached peak_temp soak
 time_end            = float(cfg.get('testset', 'time_end', 1))          # Hold temperature once rampdown finished
 
 reference1          = float(cfg.get('dut', 'reference1', 1))            # Reference value 1
@@ -177,10 +178,10 @@ if (cfg.get('mode', 'no_thermal', 1) == "false"):
     # If thermal control activated, perform initialization for PID hardware
     tecsmu = k2510.tec_meter(25,0,"2510")
     tecsmu.set_tmp("%5.3f" % sv_start)
-    tecsmu.on_temp()
     tecsmu.set_gain(pid_kp)
     tecsmu.set_intg(pid_ki)
     tecsmu.set_derv(pid_kd)
+    tecsmu.on_temp()
 
 total_time          = time_start + time_dwell + time_end + slope_pos + slope_neg # Test time, in seconds
 elapsed_time        = 0
@@ -349,13 +350,13 @@ while (idx <= (total_time / tps) ):
         else:            
             sv_temp = sv_start + ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
             print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[1])
-    elif (idx >= ((time_start + slope_pos) / tps)) and (idx < ((time_start + slope_pos + time_dwell) / tps)):
+    elif (idx >= ((time_start + slope_pos) / tps)) and (idx < ((time_start + slope_pos + time_hold) / tps)):
         # Start peak hold temp
         sv_temp = peak_temp
         if slope_shape == 10:
             middle_dwell_count = 0
         print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[2])
-    elif (idx >= ((time_start + slope_pos + time_dwell) / tps)) and (idx < ((time_start + slope_pos + time_dwell + slope_neg) / tps)):
+    elif (idx >= ((time_start + slope_pos + time_hold) / tps)) and (idx < ((time_start + slope_pos + time_dwell + slope_neg) / tps)):
         # Ramp down
         temp_nslope = peak_temp - sv_end 
         dur_nslope = float((time_start + time_dwell + slope_pos) / tps) - float((time_start + slope_pos + time_dwell + slope_neg) / tps )
@@ -403,15 +404,15 @@ while (idx <= (total_time / tps) ):
     if (delta_res == 0):
         dmm1.trigger()
         dmm2.trigger()
-        dmm3.trigger()
-        dmm4.trigger()
+        #dmm3.trigger()
+        #dmm4.trigger()
         #dmm5.trigger()
         #dmm6.trigger()
         # Collect measurement results
         meas_val  = dmm1.read_val()[1]
         meas_val2 = dmm2.read_val()[1]
-        meas_val3 = dmm3.read_val()[1]
-        meas_val4 = dmm4.read_val()[1]
+        meas_val3 = 0#dmm3.read_val()[1]
+        meas_val4 = 0#dmm4.read_val()[1]
         meas_val5 = 0# dmm5.get_data()
         meas_val6 = dmm6.get_data()
         meas_val7 = dmm7.get_data()
@@ -420,6 +421,11 @@ while (idx <= (total_time / tps) ):
     elif (delta_res == 3):
         # Collect delta measurement
         meas_val, meas_val2, meas_val3, meas_val4, meas_val5, meas_val6, meas_val7 = delta_sample() 
+        dmm3.trigger()
+	meas_val3 = dmm3.read_val()[1]
+        dmm4.trigger()
+	meas_val4 = dmm4.read_val()[1]
+        meas_val7 = dmm7.get_data()
 
     # Add results to array for stats math
     sdev_arr1.extend([meas_val])
@@ -433,8 +439,8 @@ while (idx <= (total_time / tps) ):
     if (tread == 0):
         dmm1_temp = dmm1.get_temp()
         dmm2_temp = dmm2.get_temp()
-        dmm3_temp = 0#dmm3.get_temp()
-        dmm4_temp = 0#dmm4.get_temp()
+        dmm3_temp = 24#dmm3.get_temp()
+        dmm4_temp = 24#dmm4.get_temp()
         tread = int(cfg.get('dmm', 'readtemp_period', 1))
 
     print "\033[9;88H \033[0;32m%2.3f %cC\033[0;39m" % (sv_temp, u"\u00b0")
@@ -490,3 +496,11 @@ while (idx <= (total_time / tps) ):
     if (idx == 1):
         timing_step  = float(timing_init) - float(time.time())  # Determine duration of one data sample step
     idx+=1                  # Sample index increment
+
+if (cfg.get('mode', 'no_thermal', 1) == "false"):
+    tecsmu.off_temp()
+
+
+print "\033[2J TECKit run complete."
+mfc    = imp.load_source('f5720', 'devices/f5720a.py')                  # Load support for F5700A
+quit()
