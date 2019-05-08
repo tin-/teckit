@@ -81,7 +81,7 @@ def plot_ui():
 	print "No interface defined!"
         quit()
 
-tec_status = ["Hold start","Ramp up   ","Hold peak ","Ramp down ","Hold end  ","\033[41;1m !ALERT! ","\033[42;1m Job done", "Hold U-step", "Hold D-step"]
+tec_status = ["Hold start","Ramp up 1 ","Dwell Pos ","Ramp up 2 ","Hold peak ","Ramp down1","Dwell Neg ","Ramp down2","Hold end  ","\033[41;1m !ALERT! ","\033[42;1m Job done"]
 dmm_status = ["Configure ","Sample ","ACAL DCV ","ACAL ALL ","TEMP?   ","\033[41;1m !ERROR! ","\033[42;1m Job done"]
 dmm_mode = ["DCV", "OHM", "OHMF", "DCI", "ACV", "ACI"]
 dmm_terminal = ["\033[0;44m  FRONT  ", "\033[0;45m  REAR   "]

@@ -162,7 +162,10 @@ peak_temp           = float(cfg.get('testset', 'peak_temp', 1))         # Top so
 slope_pos           = float(cfg.get('testset', 'slope', 1)) * 3600      # Steps for the positive slope
 slope_neg           = float(cfg.get('testset', 'slope', 1)) * 3600      # Steps for the negative slope
 time_start          = float(cfg.get('testset', 'time_start', 1)) * 3600 # Initial hold temperature time, before positive slope starts
-time_dwell          = float(cfg.get('testset', 'time_dwell', 1)) * 3600 # Dwell temperature duration once reached peak_temp soak
+if cfg.get('testset', 'slope_shape', 1) == 'lymex_step':
+    time_dwell          = float(cfg.get('testset', 'time_dwell', 1)) * 3600 # Dwell temperature duration once reached peak_temp soak
+else:
+    time_dwell          = 0 # No dwell step in simple setup
 time_hold           = float(cfg.get('testset', 'time_hold', 1)) * 3600  # Hold temperature for peak value
 time_end            = float(cfg.get('testset', 'time_end', 1)) * 3600   # Hold temperature once rampdown finished
 
@@ -190,7 +193,7 @@ if (cfg.get('mode', 'no_thermal', 1) == "false") and (debug_en == 0):
     tecsmu.set_derv(pid_kd)
     tecsmu.on_temp()
 
-total_time          = time_start + time_hold + time_end + slope_pos + slope_neg # Test time, in seconds
+total_time          = time_start + time_hold + time_dwell + time_dwell + time_end + slope_pos + slope_neg # Test time, in seconds
 elapsed_time        = 0
 remaining_time      = 0
 idx                 = 0                                                 # Sample index
@@ -291,8 +294,6 @@ timing_step   = 1.0
 print "\033[30;5H \033[0;35mREF    A:%11.6G  B:%11.6G  C:%11.6G  D:%11.6G  E:%11.6G \033[0;39m" % (reference1, reference2, reference3, reference4, reference5)
 print "\033[36;0H"
 
-middle_dwell_count = 0
-
 # Main ramp loop
 while (idx <= (total_time / tps) ):
     global pv_temp
@@ -327,72 +328,101 @@ while (idx <= (total_time / tps) ):
     print "\033[5;72H \033[1;35mTotal points : %d \033[0;39m" % (total_time / tps)
     print "\033[4;72H \033[0;30m\033[42mProgress     : %3.2f%% \033[49m\033[0;39m" % ((float(idx) / float(total_time / tps) ) * 100)
 
-    temp_pslope = peak_temp - sv_temp
-    dur_pslope = 1
-    if slope_shape == 10:
-        # Calculate multi-step parameters
-        middle_dwell_time = (float(time_start) / tps )
-        middle_dwell_temp = sv_start + ((peak_temp - sv_start) / 2)
+    #if slope_shape == 10:
+    temp_dwell   = sv_start + ((peak_temp - sv_start) / 2) # Dwell temperature point
+    temp_nslope1 = peak_temp - temp_dwell                  # Negative slope peak to dwell ramp delta
+    temp_nslope2 = temp_dwell - sv_end                     # Negative slope dwell to end ramp delta
+    time_slopep = slope_pos / 2
+    time_slopen = slope_neg / 2
+    
+    dur_start = float(time_start) / tps
+    dur_ramp1 = float(time_start + time_slopep) / tps
+    dur_dwellp = float(time_start + time_slopep + time_dwell) / tps
+    dur_ramp2 = float(time_start + slope_pos + time_dwell) / tps
+    dur_peak = float(time_start + slope_pos + time_dwell + time_hold) / tps
+    dur_ramn1 = float(time_start + slope_pos + time_dwell + time_hold + time_slopen) / tps
+    dur_dwelln = float(time_start + slope_pos + time_dwell + time_hold + time_slopen + time_dwell) / tps
+    dur_ramn2 = float(time_start + slope_pos + time_dwell + time_hold + slope_neg + time_dwell) / tps
+    dur_end = float(total_time) / tps
+    
+    dur_ramp = float((time_start + slope_pos) / tps)
+    dur_ramn = float((time_start + slope_pos + time_dwell + time_hold + slope_neg) / tps)
         
     # Sample and mode sequencer
-    if (idx <= (float(time_start) / tps )):
+    if (idx <= dur_start):
         # Holding for start
         sv_temp = sv_start
         print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[0])
-    elif (idx  >= (time_start / tps ) ) and ((idx < (time_start + slope_pos) / tps) ):
+    elif (idx >= dur_start ) and (idx < dur_ramp1):
         # Start positive slope ramp
-        temp_pslope = peak_temp - sv_start 
-        dur_pslope = float((time_start + slope_pos) / tps) - float((time_start / tps ) )
-        #print "\033[55;2H TEMP PSLOPE %f" % temp_pslope
-        #print "\033[56;2H DUR PSLOPE %f" % ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
         if slope_shape == 10:
-            if ((middle_dwell_temp - 0.1) <= sv_temp < (middle_dwell_temp + 0.1)) and (middle_dwell_count < middle_dwell_time):
-                middle_dwell_count = middle_dwell_count + 1 
-                idx = idx - 1
-                sv_temp = middle_dwell_temp
-                print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[7])
-            else:
-                # Continue as normal if step dwell temp not reached
-                sv_temp = sv_start + ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
-                print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[1])
-        else:            
-            sv_temp = sv_start + ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
-            print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[1])
-    elif (idx >= ((time_start + slope_pos) / tps)) and (idx < ((time_start + slope_pos + time_hold) / tps)):
-        # Start peak hold temp
+            temp_pslope = temp_dwell - sv_start                   # Positive slope to dwell ramp delta
+            dur_pslope = dur_ramp1 - dur_start
+        else:
+            temp_pslope = peak_temp - sv_start 
+            dur_pslope = dur_ramp - dur_start
+        sv_temp = sv_start + ( (temp_pslope / dur_pslope) * (idx - dur_start ) )
+        print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[1])
+    elif (idx >= dur_ramp1) and (idx < dur_dwellp):
+        # Dwell step
+        sv_temp = temp_dwell
+        print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[2])
+    elif (idx >= dur_dwellp ) and (idx < dur_ramp2):
+        # Continue positive slope ramp
+        if slope_shape == 10:
+            temp_pslope = peak_temp - temp_dwell                  # Positive slope dwell to peak ramp delta
+            dur_pslope = dur_dwellp - dur_ramp2
+        else:
+            temp_pslope = peak_temp - sv_start 
+            dur_pslope = dur_ramp2 - dur_dwellp
+            #dur_pslope = float((time_start + slope_pos) / tps) - float((time_start / tps ) )
+        #dur_pslope = float((time_start + slope_pos) / tps) - float((time_start / tps ) )
+        #sv_temp = sv_start + ( (temp_pslope / dur_pslope) * (idx - (time_start / tps ) ) )
+        sv_temp = peak_temp - ( (temp_pslope / dur_pslope) * (idx - ((time_start + slope_pos + time_dwell) / tps ) ) )
+        print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[3])
+    elif (idx >= dur_ramp2) and (idx < dur_peak):
+        # Keep peak hold temp
         sv_temp = peak_temp
+        print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[4])
+    elif (idx >= dur_peak) and (idx < dur_ramn1):
+        # Ramp down from peak to dwell
         if slope_shape == 10:
-            middle_dwell_count = 0
-        print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[2])
-    elif (idx >= ((time_start + slope_pos + time_hold) / tps)) and (idx < ((time_start + slope_pos + time_hold + slope_neg) / tps)):
-        # Ramp down
-        temp_nslope = peak_temp - sv_end 
-        dur_nslope = float((time_start + time_hold + time_dwell + slope_pos) / tps) - float((time_start + slope_pos + time_dwell + time_hold + slope_neg) / tps )
-        #print "\033[55;2H TEMP NSLOPE %f" % temp_nslope
-        #print "\033[56;2H DUR NSLOPE %f" % dur_nslope
+            temp_nslope = peak_temp - temp_dwell               # Negative slope 1
+            dur_nslope = dur_peak - dur_ramn1
+        else:
+            temp_nslope = peak_temp - sv_end 
+            dur_nslope = dur_peak - dur_ramn
+        #sv_temp = peak_temp - ( (temp_pslope / dur_pslope) * (idx - ((time_start + slope_pos + time_dwell) / tps ) ) )
+        #dur_nslope = float((time_start + time_hold + time_dwell + slope_pos) / tps) - float((time_start + slope_pos + time_dwell + time_hold + slope_neg) / tps )
+        sv_temp = peak_temp + ( (float(idx) - dur_peak) * (temp_nslope / dur_nslope) )
+        print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[5])
+    elif (idx >= dur_ramn1) and (idx < dur_dwelln):
+        # Dwell step
+        sv_temp = temp_dwell
+        print "\033[12;88H \033[1;34m%s\033[0;39m" % (tec_status[6])
+    elif (idx >= dur_dwelln) and (idx < dur_ramn2):
+        # Ramp from dwell to end
         if slope_shape == 10:
-            if ((middle_dwell_temp - 0.1) <= sv_temp < (middle_dwell_temp + 0.1)) and (middle_dwell_count < middle_dwell_time):
-                middle_dwell_count = middle_dwell_count + 1 
-                idx = idx - 1
-                sv_temp = middle_dwell_temp
-                print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[8])
-            else:
-                # Continue as normal if step dwell temp not reached
-                sv_temp = peak_temp + ( (temp_nslope / dur_nslope) * (idx - (((time_start + time_hold + slope_neg) / tps)) ) )
-                print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[3])
-        else:            
-            sv_temp = peak_temp + ( (temp_nslope / dur_nslope) * (idx - (((time_start + time_hold + slope_neg) / tps)) ) )
-            print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[3])
-    elif (idx >= (time_start + slope_pos + time_hold + slope_neg) / tps) and (idx < (total_time) / tps):
+            temp_nslope = temp_dwell - sv_end                  # Negative slope 2
+            dur_nslope = dur_dwelln - dur_ramn2
+        else:
+            temp_nslope = peak_temp - sv_end 
+            dur_nslope = dur_dwelln - dur_ramn
+        #sv_temp = peak_temp - ( (temp_pslope / dur_pslope) * (idx - ((time_start + slope_pos + time_dwell) / tps ) ) )
+        #dur_nslope = float((time_start + time_hold + time_dwell + slope_pos) / tps) - float((time_start + slope_pos + time_dwell + time_hold + slope_neg) / tps )
+        sv_temp = temp_dwell + ( (float(idx) - dur_dwelln) * (temp_nslope / dur_nslope) )
+        print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[7])
+    elif (idx >= dur_ramn2) and (idx < dur_end):
         # Hold end
         sv_temp = sv_end
-        print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[4])
-    elif (idx >= (total_time / tps)):
+        print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[8])
+    elif (idx >= dur_end):
         sv_temp = sv_start
-        print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[6])
+        print "\033[12;88H \033[1;33m%s\033[0;39m" % (tec_status[9])
         print "\033[36;1H\r\n"
         if (cfg.get('mode', 'no_thermal', 1) == "false"):
-            tecsmu.off_temp()
+            if (cfg.get('teckit', 'if_debug', 1) == "false"):
+                tecsmu.off_temp()
             print "\033[2J TECKit run complete."
             quit()
 
@@ -518,9 +548,8 @@ while (idx <= (total_time / tps) ):
         timing_step  = float(timing_init) - float(time.time())  # Determine duration of one data sample step
     idx+=1                  # Sample index increment
 
-if (cfg.get('mode', 'no_thermal', 1) == "false"):
+if (cfg.get('mode', 'no_thermal', 1) == "false") and (debug_en == 0):
     tecsmu.off_temp()
-
 
 print "\033[2J TECKit run complete."
 mfc    = imp.load_source('f5720', 'devices/f5720a.py')                  # Load support for F5700A
