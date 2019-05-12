@@ -71,6 +71,12 @@ if cfg.get('teckit', 'env_sensor', 1) == 'bme280':
         ext_temp     = env_sensor.read_temperature()
         ext_rh       = env_sensor.read_humidity()
         ext_pressure = env_sensor.read_pressure() / 100
+elif (cfg.get('teckit', 'env_sensor', 1) == "f1620") and (debug_en == 0):
+    thp = imp.load_source('f1620' , 'devices/thp_client.py')              # Load Fluke 1620 support
+    env_sensor = thp.THP_socket(cfg.get('teckit', 'env_1620_ip', 1), int(cfg.get('teckit', 'env_1620_port', 1)) )
+    def read_environment():
+        global ext_temp, ext_rh, ext_pressure
+        error, ext_temp, ext_rh, ext_pressure = env_sensor.getTHP()
 else:
     def read_environment():                                             # Dummy placeholder if no BME280 configured
         global ext_temp, ext_rh, ext_pressure
@@ -82,14 +88,14 @@ if (cfg.get('mode', 'no_thermal', 1) == "false") and (debug_en == 0):
     k2510  = imp.load_source('k2510' , 'devices/k2510.py')              # Load Keithley 2510 support
 
 if (debug_en == 0):
-    trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
-    dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-    dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+    #trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
+    #dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+    #dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
     #dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
     #dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
     #dmm5   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-    dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-    dmm7   = imp.load_source('f8508a' , 'devices/f8508a.py')                # Load Fluke 8508A support
+    #dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
+    dmm7   = imp.load_source('d1281' , 'devices/d1281.py')                # Load Fluke 8508A support
     #em1    = imp.load_source('hp53131' , 'devices/hp53131a.py')             # Load support for K6517
     #dmm5   = imp.load_source('r6581t' , 'devices/r6581t.py')                # Load support for R6581T
     #ilx5910= imp.load_source('ilx5910', 'devices/ilx.py')                   # Load support for ILX 5910B
@@ -99,24 +105,24 @@ if (debug_en == 0):
     #mfc    = imp.load_source('f5700', 'devices/f5700a.py')                  # Load support for F5700A
     #scan = k7168_client.THP_socket('192.168.1.114',10001)                  # External scanner
 
-    trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
-    dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
-    dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
+    #trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
+    #dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
+    #dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
     #dmm4 = dmm4.dmm_meter (11,0,"3458C") # GPIB 
     #dmm3 = dmm3.dmm_meter (10,0,"3458D") # GPIB 
     #dmm5 = dmm5.scpi_meter(4,0,"2002-4") # GPIB 
-    dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
-    dmm7 = dmm7.flk_meter(5,0,"8508")
+    #dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
+    dmm7 = dmm7.flk_meter(16,0,"D1281")
     #cntr = em1.cntr(3,0,"53131A")
     #dmm5 = dmm5.scpi_meter(9,0,"6581T")
     #dmm7 = dmm7.k182m_meter(18,0,"2182")
 
-    dmm1.set_ohmf_range(100e3)                                                # 3458A function/range config
-    dmm2.set_ohmf_range(10e3)                                                # 3458B function/range config
+    #dmm1.set_ohmf_range(100e3)                                                # 3458A function/range config
+    #dmm2.set_ohmf_range(10e3)                                                # 3458B function/range config
     #dmm3.set_dci_range(0.10)                                                # 3458C function/range config
     #dmm4.set_dcv_range(10)                                                # 3458D function/range config
-    dmm6.set_ohmf_range(200)                                                # K2002-6 function/range config
-    dmm7.set_ohmf_range(75e3)                                                # K2002-4 function/range config
+    #dmm6.set_ohmf_range(200)                                                # K2002-6 function/range config
+    dmm7.set_tohm_range(10e3)                                                # K2002-4 function/range config
     #dmm5.set_ohmf_range(200)                                                # 3458D function/range config
     #dmm6.set_tohm_range(1)                                                # F8508A function/range config
 
@@ -255,8 +261,8 @@ print "\033[12;2H \033[1;32mPeak temp    : %.3f %cC\033[0;39m" % (peak_temp, u"\
 
 icnt = 0
 if (debug_en == 0):
-    dmm1_temp = dmm1.get_temp()
-    dmm2_temp = dmm2.get_temp()
+    dmm1_temp = 0#dmm1.get_temp()
+    dmm2_temp = 0#dmm2.get_temp()
     dmm3_temp = 0#dmm3.get_temp()
     dmm4_temp = 0#dmm4.get_temp()
 tread = int(cfg.get('dmm', 'readtemp_period', 1))
@@ -301,11 +307,14 @@ while (idx <= (total_time / tps) ):
     if (idx == 1):
         timing_init   = float(time.time())
 
-    if cfg.get('teckit', 'env_sensor', 1) != 'none':
+    if cfg.get('teckit', 'env_sensor', 1) == 'bme280':
         ext_temp     = env_sensor.read_temperature()
         ext_rh       = env_sensor.read_humidity()
         ext_pressure = env_sensor.read_pressure() / 100
         print "\033[34;67H \033[1;31m%2.3f%cC  \033[1;32m%3.1f%%RH  \033[1;33m%4.1f hPa\033[0;39m" % (ext_temp, u"\u00b0", ext_rh, ext_pressure)
+    elif (cfg.get('teckit', 'env_sensor', 1) == "f1620") and (debug_en == 0):
+        error, ext_temp, ext_rh, ext_pressure = env_sensor.getTHP()
+        print "\033[34;67H \033[1;31m%2.3f%cC  \033[1;32m%3.1f%%RH  \033[1;33m%4.1f hPa\033[0;39m" % (float(ext_temp), u"\u00b0", float(ext_rh), float(ext_pressure))
     else:
         ext_temp     = 24.0
         ext_rh       = 0
@@ -437,25 +446,25 @@ while (idx <= (total_time / tps) ):
         tec_curr = 0.0
     
     if (debug_en == 0):
-        nvm_temp = trm1.get_data() #CHUB
+        nvm_temp = 24#trm1.get_data() #CHUB
     else:
         nvm_temp = 20
 
     # Trigger instruments to start conversion in normal mode
     if (delta_res == 0) and (debug_en == 0):
-        dmm1.trigger()
-        dmm2.trigger()
+        #dmm1.trigger()
+        #dmm2.trigger()
         #dmm3.trigger()
         #dmm4.trigger()
         #dmm5.trigger()
         #dmm6.trigger()
         # Collect measurement results
-        meas_val  = dmm1.read_val()[1]
-        meas_val2 = dmm2.read_val()[1]
+        meas_val  = 0#dmm1.read_val()[1]
+        meas_val2 = 0#dmm2.read_val()[1]
         meas_val3 = 0#dmm3.read_val()[1]
         meas_val4 = 0#dmm4.read_val()[1]
         meas_val5 = 0# dmm5.get_data()
-        meas_val6 = dmm6.get_data()
+        meas_val6 = 0#dmm6.get_data()
         meas_val7 = dmm7.get_data()
         meas_val8 = 0 #
     elif (debug_en == 1):
@@ -484,12 +493,13 @@ while (idx <= (total_time / tps) ):
     sdev_arr3.extend([meas_val3])
     sdev_arr4.extend([meas_val4])
     sdev_arr5.extend([meas_val5])
-    sdev_arr6.extend([meas_val5])
+    sdev_arr6.extend([meas_val6])
+    sdev_arr7.extend([meas_val7])
 
     tread = tread - 1
     if (tread == 0) and (debug_en == 0):
-        dmm1_temp = dmm1.get_temp()
-        dmm2_temp = dmm2.get_temp()
+        dmm1_temp = 24#dmm1.get_temp()
+        dmm2_temp = 24#dmm2.get_temp()
         dmm3_temp = 24#dmm3.get_temp()
         dmm4_temp = 24#dmm4.get_temp()
         tread = int(cfg.get('dmm', 'readtemp_period', 1))
@@ -498,8 +508,8 @@ while (idx <= (total_time / tps) ):
     print "\033[10;88H \033[1;32m%2.3f %cC\033[0;39m" % (pv_temp, u"\u00b0")
     print "\033[11;88H \033[1;35m%5.4f \033[0;39m" % (tec_curr)
     print "\033[10;55H \033[1;38m%11.8f\033[0;39m" % (meas_val)
-    print ("\033[31;3H \033[1;32mMedian A= %.8f      " % np.median(sdev_arr1) )
-    print ("\033[32;3H \033[1;32m Sdev A = %.4G     " % ( np.std(sdev_arr1) ) )
+    print ("\033[31;3H \033[1;32mMedian A= %.8f      " % np.median(sdev_arr7) )
+    print ("\033[32;3H \033[1;32m Sdev A = %.4G     " % ( np.std(sdev_arr7) ) )
 
     print ("\033[31;28H\033[1;33mB=%.8f " % np.median(sdev_arr2) )
     print ("\033[31;45H\033[1;34mC=%.8f " % np.median(sdev_arr3) )
@@ -519,7 +529,7 @@ while (idx <= (total_time / tps) ):
     ppm_delta6 = ((meas_val6 / reference6) - 1) * 1e6
     ppm_delta7 = ((meas_val7 / reference7) - 1) * 1e6
     ppm_delta8 = ((meas_val8 / reference8) - 1) * 1e6
-    print "\033[33;13H\033[1;32m %9.3f\033[0;39m" % (ppm_delta)
+    print "\033[33;13H\033[1;32m %9.3f\033[0;39m" % (ppm_delta7)
     print "\033[33;30H\033[1;33m %9.3f\033[0;39m" % (ppm_delta2)
     print "\033[33;47H\033[1;34m %9.3f\033[0;39m" % (ppm_delta3)
     print "\033[33;66H\033[1;35m %9.3f\033[0;39m" % (ppm_delta4)
@@ -530,7 +540,7 @@ while (idx <= (total_time / tps) ):
     # Data storage logic goes here
     if (icnt >= 12):
         icnt = 0
-    print ("\033[%d;3H[%6d] S%5.3f P%5.3f T%5.3f \033[1;34m A%12.9e \033[0;32mB%12.9e \033[0;33mC%12.9e C\033[0;39m" % (icnt+17, idx, sv_temp, pv_temp, nvm_temp, meas_val, meas_val2, meas_val3) ) 
+    print ("\033[%d;3H[%6d] S%5.3f P%5.3f T%5.3f \033[1;34m A%12.9e \033[0;32mB%12.9e \033[0;33mC%12.9e C\033[0;39m" % (icnt+17, idx, sv_temp, pv_temp, nvm_temp, meas_val7, meas_val2, meas_val3) ) 
     icnt = icnt + 1
     if irc_active:
         itext = irc.get_text() 
@@ -538,7 +548,7 @@ while (idx <= (total_time / tps) ):
 
     with open(fileName4, 'a') as o1:  # Open file handles for storing values
         o1.write (time.strftime("%d/%m/%Y-%H:%M:%S;") + ("%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%3.1f;%3.1f;%3.1f;%3.1f;%3.3f;%3.1f;%4.1f;%3.3f;%3.3f;\n" % \
-(float(meas_val),float(meas_val2),float(meas_val3),float(meas_val4),float(meas_val5),float(meas_val6),float(meas_val7),float(meas_val8), float(dmm1_temp), float(dmm2_temp),float(dmm3_temp),float(dmm4_temp),ext_temp,ext_rh,ext_pressure,pv_temp, float(nvm_temp)) ) )
+(float(meas_val),float(meas_val2),float(meas_val3),float(meas_val4),float(meas_val5),float(meas_val6),float(meas_val7),float(meas_val8), float(dmm1_temp), float(dmm2_temp),float(dmm3_temp),float(dmm4_temp),float(ext_temp),float(ext_rh),float(ext_pressure),pv_temp, float(nvm_temp)) ) )
         sys.stdout.flush()
         o1.close()
     
