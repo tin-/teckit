@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/k6221.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
+# $Id: devices/k6221.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
 # xDevs.com Keithley 6221 module
 # Copyright (c) 2012-2019, xDevs.com
 # 

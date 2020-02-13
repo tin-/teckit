@@ -1,4 +1,4 @@
-# $Id: f5720b.py | Rev 1110  | 2019/01/03 11:24:54 tin_fpga $
+# $Id: devices/f5720b.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
 # Fluke 5720A test and calibration module
 # 
 # (C) 2012-2017, cal.equipment
@@ -36,7 +36,7 @@ remaining = end_time - (start_time + elapsed)
 f5720_mfg_id = "FLUKE"
 f5720_model_id = "5720A"
 f5720_dateformat = '%m%d%y'
-f5720_proc_version = "$Id: f5720b.py | Rev 1110  | 2019/01/03 11:24:54 tin_fpga $"
+f5720_proc_version = "$Id: devices/f5720b.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $"
 
 # Fluke 5720A 95% Specifications values
 

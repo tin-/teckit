@@ -56,7 +56,7 @@ class scpi_meter():
             self.inst.timeout = 180
         self.reflevel = reflevel
         self.name = name
-        self.init_inst_fres()
+        self.init_inst()
 
     def init_inst_fres(self):
         # Setup SCPI DMM
@@ -82,12 +82,13 @@ class scpi_meter():
 
     def init_inst(self):
         # Setup SCPI DMM
-        #self.inst.clear()
-        time.sleep(1)
-        #self.inst.write(":CONF:FRES")
-        #self.inst.write(":SENS:FRES:NPLC 100")
-        #self.inst.write(":FORM:ELEM NONE")
-        #self.inst.write(":SYST:FAST:STAT OFF")
+        self.inst.clear()
+	self.inst.write(":STAT:PRES")
+        self.inst.write(":INIT:CONT OFF")
+        self.inst.write(":INP:GUAR FLO")
+        #self.inst.write(":SENS:FRES:POW HI")
+        #self.inst.write(":ARM:SOUR BUS")
+                #self.inst.write(":SYST:FAST:STAT OFF")
         #self.inst.write(":SENS:FRES:RANG 10E3")
         #self.inst.write(":SYST:LSYN:STAT ON")
         #self.inst.write(":sens:temp:tran rtd")      #select thermistor
@@ -99,8 +100,10 @@ class scpi_meter():
         #self.inst.write(":SENS:FUNC 'TEMP'")
         #self.inst.write(":SENS:TEMP:DIG 7")
         #self.inst.write(":SENS:TEMP:NPLC 10")
+	#self.inst.write(":ARM:LAY2:DEL 0.0")
+        self.inst.write(":FORM:ELEM NONE")
         self.inst.write(":SENS:FUNC 'VOLT:DC'")
-        #self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 10;AVER:COUN 10;TCON MOV")
+        self.inst.write(":SENS:VOLT:DC:DIG 8;NPLC 100")
         #self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
         self.inst.write(":SENS:VOLT:DC:RANG 10")
         #self.inst.write(":FORM:ELEM READ")

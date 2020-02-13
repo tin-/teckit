@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/hp3458.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
+# $Id: devices/hp3458.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
 # xDevs.com HP 3458A module
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -117,7 +117,7 @@ class dmm_meter():
 	self.inst.write("OCOMP ON")
         self.inst.write("NPLC 100")
         self.inst.write("NDIG 8")
-	self.inst.write("DELAY 0.05") # 2 second delay to mitigate OCOMP accuracy issue due DA
+	self.inst.write("DELAY 1") # 2 second delay to mitigate OCOMP accuracy issue due DA
 
     def set_ohmf_fast_range(self,cmd):
 	self.inst.write("OHMF %g" % cmd)
@@ -135,8 +135,8 @@ class dmm_meter():
 
     def set_dcv_range(self,cmd):
 	self.inst.write("DCV %g" % cmd)
-        self.inst.write("NPLC 100")
-        self.inst.write("NDIG 9")
+        self.inst.write("NPLC 200")
+        self.inst.write("NDIG 8")
         self.inst.write("DELAY 0")
 
     def set_dci_range(self,cmd):

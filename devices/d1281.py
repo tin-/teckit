@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/f8508a.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
+# $Id: devices/d1281.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
 # xDevs.com Fluke 8508A module
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -89,6 +89,7 @@ class flk_meter():
 	self.inst.write("*RST")
 	self.inst.write("*CLR")
         self.inst.write("TRG_SRCE EXT")
+	self.inst.write("INPUT CH_A")
         #self.inst.write("GUARD EXT")
         #self.inst.write(":SYST:LSYN:STAT ON")
 	#self.inst.write(":sens:temp:tran rtd")      #select thermistor
@@ -109,16 +110,8 @@ class flk_meter():
 #        self.inst.write(":DISP:WIND2:TEXT:DATA \"               \";STAT ON;")
 #        #kei.write("READ?")
 
-    def set_pt1000_rtd(self):
-	self.inst.write(":sens:temp:tran rtd")      #select thermistor
-	self.inst.write(":sens:temp:rtd:type user") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:alph 0.00375") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:beta 0.160") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:delt 1.605") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:rzer 1000") #10 kOhm thermistor
-        self.inst.write(":SENS:FUNC 'TEMP'")
-        self.inst.write(":SENS:TEMP:DIG 7")
-        self.inst.write(":SENS:TEMP:NPLC 10")
+    def set_input(self, cmd):
+        self.inst.write("INPUT %s" % cmd)
 
     def set_ohmf_range(self,cmd):
         # Setup SCPI DMM
@@ -156,8 +149,7 @@ class flk_meter():
 	self.inst.write("TRUE_OHMS %.4f" % cmd)
 	self.inst.write("TRUE_OHMS RESL8,FAST_OFF")
 	self.inst.write("TRUE_OHMS LOI_OFF")
-	#self.inst.write("INPUT FRONT")
-	self.inst.write("AVG OFF")
+	self.inst.write("AVG AV4")
 
     def set_tohm_rel_range(self,cmd):
         # Setup SCPI DMM
@@ -170,14 +162,14 @@ class flk_meter():
 
     def set_ohm_range(self,cmd):
         # Setup SCPI DMM
-
-	self.inst.write(":SENS:RES:DIG 9;NPLC 10;AVER:COUN 10;TCON MOV")
-	self.inst.write(":SENS:RES:OCOM OFF")
-	self.inst.write(":SENS:RES:RANG %.2f" % cmd)
+	self.inst.write("OHMS %.4f" % cmd)
+	self.inst.write("OHMS RESL8,FAST_OFF,TWO_WR")
+	self.inst.write("OHMS LOI_OFF")
+	self.inst.write("AVG OFF")
 
     def set_dcv_range(self,cmd):
         # Setup SCPI DMM
-	self.inst.write("DCV %.3f,FILT_ON,RESL8,FAST_OFF,FOUR_WR" % cmd)
+	self.inst.write("DCV %.3f,FILT_OFF,RESL8,FAST_OFF" % cmd)
 
     def read_data(self,cmd):
         data_float = 0.0

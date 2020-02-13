@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/b2987a.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
-# xDevs.com B2987A module
+# $Id: devices/k1801.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
+# xDevs.com Keithley 2002 module
 # Copyright (c) 2012-2019, xDevs.com
 # 
 # Python 2.7 | RPi3 
@@ -47,7 +47,7 @@ class Timeout():
   def raise_timeout(self, *args):
     raise Timeout.Timeout()
 
-class em_meter():
+class scpi_meter():
     temp = 38.5
     data = ""
     status_flag = 1
@@ -55,15 +55,15 @@ class em_meter():
 
     def __init__(self,gpib,reflevel,name):
         self.gpib = gpib
-	print "\033[6;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keysight B2987A\033[0;39m" % self.gpib
+	print "\033[6;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keithley 2002\033[0;39m" % self.gpib
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
-            self.inst = vxi11.Instrument(cfg.get('teckit', 'em_ip')) # VXI link
+            self.inst = vxi11.Instrument(cfg.get('teckit', 'vxi_ip', 1), "gpib0,%d" % self.gpib) # VXI link
             self.inst.timeout = 180
         self.reflevel = reflevel
         self.name = name
-        self.init_inst_dummy()
+        self.init_inst()
 
     def init_inst_fres(self):
         # Setup SCPI DMM
@@ -73,7 +73,7 @@ class em_meter():
         self.inst.write(":SYST:AZER:TYPE SYNC")
         self.inst.write(":SYST:LSYN:STAT ON")
 	self.inst.write(":SENS:FUNC 'FRES'")
-	self.inst.write(":SENS:FRES:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:FRES:DIG 9;NPLC 10;AVER:COUN 10;TCON MOV")
 	self.inst.write(":SENS:FRES:AVER:STAT ON")
 	self.inst.write(":SENS:FRES:OCOM ON")
 	self.inst.write(":SENS:FRES:RANG 20E3")
@@ -82,12 +82,7 @@ class em_meter():
     def init_inst_dummy(self):
         # Setup SCPI DMM
 	self.inst.write("*CLR")
-	self.inst.write(":SENS1:CURR:DC:NPLC 100")
-	self.inst.write(":SENS1:VOLT:DC:NPLC 100")
-        #self.inst.write(":SYST:AZER:TYPE SYNC")
-        #self.inst.write(":SYST:LSYN:STAT ON")
-        #self.inst.write(":FORM:ELEM READ")
-	#self.inst.write(":SENS:VOLT:DC:DIG 9")
+        self.inst.write(":FORM:ELEM READ")
 	time.sleep(0.1)
 
     def init_inst(self):
@@ -97,6 +92,8 @@ class em_meter():
 	self.inst.write("*CLR")
         self.inst.write(":SYST:AZER:TYPE SYNC")
         self.inst.write(":SYST:LSYN:STAT ON")
+	self.inst.write(":INP:PRE:STAT ON")
+	self.inst.write(":INP:PRE:FILT FAST")
 	#self.inst.write(":sens:temp:tran rtd")      #select thermistor
 	#self.inst.write(":sens:temp:rtd:type user") #10 kOhm thermistor
 	#self.inst.write(":sens:temp:rtd:alph 0.00375") #10 kOhm thermistor
@@ -107,8 +104,8 @@ class em_meter():
         #self.inst.write(":SENS:TEMP:DIG 7")
         #self.inst.write(":SENS:TEMP:NPLC 10")
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
-	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
-	self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
+	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 5;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:VOLT:DC:AVER:STAT OFF")
 	self.inst.write(":SENS:VOLT:DC:RANG 20")
         self.inst.write(":FORM:ELEM READ")
 #        self.inst.write(":DISP:WIND:TEXT:DATA \"               \";STAT ON;")
@@ -129,7 +126,8 @@ class em_meter():
     def set_ohmf_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'FRES'")
-	self.inst.write(":SENS:FRES:DIG 9;NPLC 50;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:FRES:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
 	if (float(cmd)) <= 21e3:
 	    self.inst.write(":SENS:FRES:OCOM ON")
 	else:
@@ -146,16 +144,7 @@ class em_meter():
     def set_dcv_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
-	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 20;")
-	self.inst.write(":SENS:VOLT:DC:RANG %.2f" % cmd)
-
-    def math_null(cmd):
-	if cmd == 1:
-	    self.inst.write(":SENS:VOLT:DC:REF:STAT ON")
-	    self.inst.write(":SENS:VOLT:DC:REF:ACQ")
-	    time.sleep(1)
-	else:
-	    self.inst.write(":SENS:VOLT:DC:REF:STAT OFF")
+	self.inst.write(":SENS:VOLT:DC:RANG %.4e" % cmd)
 
     def trigger(self):
 	self.inst.write("READ?")
@@ -177,6 +166,7 @@ class em_meter():
             return (0,float(0)) # Exception on float conversion, 0 = error
         return (1,data_float) # Good read, 1 = converted to float w/o exception
 
+
     def read_data(self,cmd):
         data_float = 0.0
         data_str = ""
@@ -196,11 +186,9 @@ class em_meter():
         return (1,data_float) # Good read, 1 = converted to float w/o exception
 
     def get_data(self):
-	self.inst.write("READ?")
-        #self.status_flag
-	self.data = self.inst.read()
-        #if (self.status_flag):
-        #    self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
+        self.status_flag,data = self.read_data("READ?")
+        if (self.status_flag):
+            self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
         return self.data
 
     def get_data_status(self):

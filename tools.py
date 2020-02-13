@@ -1,5 +1,5 @@
 ﻿# -*- coding: utf-8 -*-
-# $Id: tools.py | Rev 40  | 2019/01/10 03:29:21 tin_fpga $
+# $Id: tools.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
 # xDevs.com TEC Experiment app tools pack
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -50,7 +50,7 @@ def create_local_file(fileName):
             #o.write("-i- %s;\n" % cfg.get('testset', 'testname', 1))
             #o.write("-i- %s;\n" % cfg.get('testset', 'testdut', 1))            
             #o.write("-i- %s;\n" % cfg.get('testset', 'testnotes', 1))
-            o.write("date;val1;val2;val3;val4;val5;val6;val7;val8;temp1;temp2;temp3;temp4;amb_temp;amb_rh;amb_pressure;box_temp;nvm_temp;\n")
+            o.write("date;val1;val2;val3;val4;val5;val6;val7;val8;temp1;temp2;temp3;temp4;amb_temp;amb_rh;amb_pressure;box_temp;nvm_temp;tec_curr;psu_volt;psu_curr;\n")
             print ("\033[2;40H-i- DataFile %s does not exist\r\n" % fileName) 
     else: 
         print ("\033[2;40H-i- Datafile %s exists\r\n" % fileName)
@@ -59,7 +59,7 @@ def create_local_file(fileName):
 def plot_ui():
     """ Draw pretty lines """
     print "\033[1;1H╒\033[1;100H╕\033[35;1H╘\033[35;100H╛"                  
-    for gi in range (2,100):
+    for gi in range (2,134):
 	print ("\033[1;%dH═" % (gi))
         print ("\033[3;%dH─" % (gi) )
 	print ("\033[8;%dH═" % gi)
@@ -67,10 +67,10 @@ def plot_ui():
 	print ("\033[33;%dH═" % gi)
         print ("\033[35;%dH═" % gi)
     for gy in range (2,35):
-	print ("\033[%d;1H│\033[%d;100H│" % (gy, gy))
+	print ("\033[%d;1H│\033[%d;134H│" % (gy, gy))
     print "\033[33;1H╞\033[8;1H╞\033[29;1H╞\033[3;1H├\033[3;100H┤\033[8;100H╡\033[33;100H╡\033[29;100H╡"
-    print "\033[41;66H│"
-    print ("\033[42;100H\r\n")
+    #print "\033[41;66H│"
+    #print ("\033[42;100H\r\n")
     ix = x256.from_rgb(160, 130, 10)
     print "\033[2;3H\x1b[38;5;" + str(ix) + "m xDevs.com TEC Experiment kit \033[0;49m"
     if cfg.get('teckit', 'interface', 1) == 'gpib':

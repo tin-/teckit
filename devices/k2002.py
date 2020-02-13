@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/k2002.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
+# $Id: devices/k2002.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
 # xDevs.com Keithley 2002 module
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -63,7 +63,7 @@ class scpi_meter():
             self.inst.timeout = 180
         self.reflevel = reflevel
         self.name = name
-        self.init_inst_dummy()
+        self.init_inst()
 
     def init_inst_fres(self):
         # Setup SCPI DMM
@@ -73,7 +73,7 @@ class scpi_meter():
         self.inst.write(":SYST:AZER:TYPE SYNC")
         self.inst.write(":SYST:LSYN:STAT ON")
 	self.inst.write(":SENS:FUNC 'FRES'")
-	self.inst.write(":SENS:FRES:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:FRES:DIG 9;NPLC 10;AVER:COUN 10;TCON MOV")
 	self.inst.write(":SENS:FRES:AVER:STAT ON")
 	self.inst.write(":SENS:FRES:OCOM ON")
 	self.inst.write(":SENS:FRES:RANG 20E3")
@@ -92,6 +92,8 @@ class scpi_meter():
 	self.inst.write("*CLR")
         self.inst.write(":SYST:AZER:TYPE SYNC")
         self.inst.write(":SYST:LSYN:STAT ON")
+	self.inst.write(":INP:PRE:STAT OFF")
+	#self.inst.write(":INP:PRE:FILT FAST")
 	#self.inst.write(":sens:temp:tran rtd")      #select thermistor
 	#self.inst.write(":sens:temp:rtd:type user") #10 kOhm thermistor
 	#self.inst.write(":sens:temp:rtd:alph 0.00375") #10 kOhm thermistor
@@ -102,7 +104,7 @@ class scpi_meter():
         #self.inst.write(":SENS:TEMP:DIG 7")
         #self.inst.write(":SENS:TEMP:NPLC 10")
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
-	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 30;AVER:COUN 10;TCON MOV")
 	self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
 	self.inst.write(":SENS:VOLT:DC:RANG 20")
         self.inst.write(":FORM:ELEM READ")
@@ -124,7 +126,8 @@ class scpi_meter():
     def set_ohmf_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'FRES'")
-	self.inst.write(":SENS:FRES:DIG 9;NPLC 50;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:FRES:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
 	if (float(cmd)) <= 21e3:
 	    self.inst.write(":SENS:FRES:OCOM ON")
 	else:
@@ -141,7 +144,7 @@ class scpi_meter():
     def set_dcv_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
-	self.inst.write(":SENS:VOLT:DC:RANG %.2f" % cmd)
+	self.inst.write(":SENS:VOLT:DC:RANG %.4e" % cmd)
 
     def trigger(self):
 	self.inst.write("READ?")

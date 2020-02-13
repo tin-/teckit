@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/k2510.py | Rev 40  | 2019/01/10 03:29:21 tin_fpga $
+# $Id: devices/f1590.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
 # xDevs.com Fluke 1590 SuperThermometer module
 # Copyright (c) 2012-2019, xDevs.com
 # 
