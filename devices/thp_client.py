@@ -41,7 +41,7 @@ class THP_socket():
   def connect(self):
     #Connect to remote server
     try:
-      with Timeout(5):
+      with Timeout(1):
         self.s.connect((self.host , self.port))
     except Timeout.Timeout:
       # Socket connection timeout exception
@@ -70,7 +70,7 @@ class THP_socket():
 
   def send_data_THP(self):
     #Send some data to remote server
-    message = "READ?3"
+    message = "READ?3".encode()
  
     try :
       #Set the whole string
@@ -114,7 +114,9 @@ class THP_socket():
         error = self.send_data_THP()
         if (error == 0):
           self.receive_data()
-          ssplit = self.reply.split(',')
+          sesplit = self.reply.decode()
+          #print (sesplit)
+          ssplit = sesplit.split(',')
           if (len(ssplit) == 3):
             self.exttemp = ssplit[0]
             self.rh = ssplit[1]
@@ -142,7 +144,9 @@ class THP_socket():
     return (error,self.exttemp,self.rh)
 
 # Example usage
-#thp = THP_socket('192.168.100.151',10001) 
+#thp = THP_socket('192.168.1.15',10001)
+
+#for rx in range (0,100000):
 #error,temp,rh,press = thp.getTHP()
 #print 'getTHP called... Error = ' + str(error) + ' : Temp = ' + str(temp) + ' : RH = ' + str(rh) + ' : Pressure = ' + str(press)
 #error,temp,rh = thp.getTH()

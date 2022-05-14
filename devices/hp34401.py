@@ -2,12 +2,26 @@
 # http://xdevs.com/guide/ni_gpib_rpi/
 import os.path
 import sys
-#import Gpib
-import vxi11
 import time
 import numbers
 import signal
-
+import ConfigParser
+cfg = ConfigParser.ConfigParser()
+cfg.read('teckit.conf')
+cfg.sections()
+#from Adafruit_BME280 import *
+#import k7168_client
+if cfg.get('teckit', 'interface', 1) == 'gpib':
+    import Gpib
+elif cfg.get('teckit', 'interface', 1) == 'vxi':
+    import vxi11
+elif cfg.get('teckit', 'interface', 1) == 'visa':
+    import visa
+    rm = visa.ResourceManager()
+else:
+    print "No interface defined!"
+    quit()
+    
 cnt = 0
 tread = 20
 temp = 18
@@ -37,17 +51,22 @@ class scpi_meter():
 
     def __init__(self,gpib,reflevel,name):
         self.gpib = gpib
-	print "\033[5;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : HP 34401A\033[0;39m" % self.gpib
-        #self.inst = Gpib.Gpib(0,self.gpib, timeout=60) # SCPI GPIB Address = self.gpib
-	self.inst = vxi11.Instrument("192.168.1.125", "gpib0,%d" % self.gpib)
-	self.inst.timeout = 30
+        print "\033[5;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : HP 34401A\033[0;39m" % self.gpib
+        if cfg.get('teckit', 'interface', 1) == 'gpib':
+            self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
+        elif cfg.get('teckit', 'interface', 1) == 'vxi':
+            self.inst = vxi11.Instrument(cfg.get('teckit', 'vxi_ip', 1), "gpib0,%d" % self.gpib) # VXI link
+            self.inst.timeout = 180
+        elif cfg.get('teckit', 'interface', 1) == 'visa':
+            self.inst = rm.open_resource('GPIB::%d::INSTR' % self.gpib)
+            self.inst.timeout = 300000 # timeout delay in ms
         self.reflevel = reflevel
         self.name = name
         self.init_inst()
 
     def init_inst_dummy(self):
         # Setup SCPI DMM
-	time.sleep(0.1)
+        time.sleep(0.1)
 
     def init_inst(self):
         # Setup SCPI DMM

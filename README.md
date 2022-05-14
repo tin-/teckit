@@ -1,4 +1,4 @@
-![Status: Alpha](https://img.shields.io/badge/Status-alpha-red.svg) [![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg)](https://www.python.org/downloads/release/python-2715/) ![Build 40](https://img.shields.io/badge/Build-40-lightgrey.svg)
+![Status: Alpha](https://img.shields.io/badge/Status-alpha-red.svg) [![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg)](https://www.python.org/downloads/release/python-2715/) ![Build 40](https://img.shields.io/badge/Build-46-lightgrey.svg)
 
 # xDevs.com TECKit app
 VXI/GPIB Datalogger with temperature control functionality designed for DUT thermal stability measurement experiments.
@@ -21,7 +21,8 @@ Its main purpose is to perform controlled thermal chamber sweeps and measure var
 * I2C access for [BME280 sensor](https://xdevs.com/guide/thp_rpi/) support
 * [Agilent E5810A](https://xdevs.com/guide/e5810a/) for VXI11-GPIB gateway support, if VXI interface is used or,
 * [Agilent 82357B](https://xdevs.com/guide/agilent_gpib_rpi/) USB-GPIB interface dongle for linux-gpib or,
-* [NI USB-GPIB-HS](https://xdevs.com/guide/ni_gpib_rpi/) interface dongle for linux-gpib
+* [NI USB-GPIB-HS](https://xdevs.com/guide/ni_gpib_rpi/) interface dongle for linux-gpib.
+* NI VISA interface library. Added interface, but is not actively supported.
 
 ## Software requirements
 
@@ -145,21 +146,27 @@ Each ramp sequence has five stages. Speed or duration of each stage configured i
 
 ### Measurement devices
 
-* Keithley 2001 precision DMM
+* [Keithley 2001](https://xdevs.com/fix/kei2001/) precision DMM
 * [Keithley 2002](https://xdevs.com/review/k2002) precision DMM
 * [HP/Agilent/Keysight 3458A](https://xdevs.com/fix/hp3458a) reference DMM
+* [HP/Agilent 34401A](https://xdevs.com/fix/hp34401a/) 6.5-digit DMM
 * [Fluke 8508A](https://xdevs.com/review/f8508a) reference DMM
+* [Datron 1281](https://xdevs.com/fix/d1281) reference DMM
+* Fluke 1590 SuperThermometer
 * Keithley 2182/2182A Nanovoltmeter
 * [Keithley 182/182-M](https://xdevs.com/review/kei182m) Nanovoltmeter
 * [Keithley 6517/6517A](https://xdevs.com/fix/kei6517/)/6517B Electrometer
+* [Keysight B2985A and B2987A](https://xdevs.com/article/b2987a/) High-resistance/Picoammeter/Electrometer
 * Fluke 1590 SuperThermometer
 * [Fluke 1529](https://xdevs.com/fix/chub_e4/) Chub-E4 Thermometer
 * HP/Agilent/Keysight 53131A Frequency counter
+* Delta-measurement for low ohmic resistances with Fluke 57xx MFC+DVM
 
 ### Temperature controllers
 
 * [Keithley 2510](https://xdevs.com/fix/kei2510) TEC SMU for temperature chamber control
 * ILX 5910B TEC controller for temperature chamber control
+* Arroyo 585 via UART-RS232 interface
 
 ### Environment monitoring
 

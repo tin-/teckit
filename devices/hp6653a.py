@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/hp6653a.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
+# $Id: devices/hp6653a.py | Rev 46  | 2021/09/24 20:26:29 tin_fpga $
 # xDevs.com HP 6653A PSU module
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -71,11 +71,8 @@ class psu_src():
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
-            if (refhp == 1):
-                self.inst = vxi11.Instrument(cfg.get('teckit', 'vxib_ip', 1), "gpib0,%d" % self.gpib) # VXI link
-            else:
-                self.inst = vxi11.Instrument(cfg.get('teckit', 'vxi_ip', 1), "gpib0,%d" % self.gpib) # VXI link
-                self.inst.timeout = 2 # timeout delay in s
+            self.inst = vxi11.Instrument(cfg.get('teckit', 'vxib_ip', 1), "gpib0,%d" % self.gpib) # VXI link
+            self.inst.timeout = 30 # timeout delay in s
         elif cfg.get('teckit', 'interface', 1) == 'visa':
             self.inst = rm.open_resource('GPIB::%d::INSTR' % self.gpib)
             self.inst.timeout = 300000 # timeout delay in ms

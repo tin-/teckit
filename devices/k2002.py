@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/k2002.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
+# $Id: devices/k2002.py | Rev 46  | 2021/09/24 20:26:29 tin_fpga $
 # xDevs.com Keithley 2002 module
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -22,6 +22,9 @@ if cfg.get('teckit', 'interface', 1) == 'gpib':
     import Gpib
 elif cfg.get('teckit', 'interface', 1) == 'vxi':
     import vxi11
+elif cfg.get('teckit', 'interface', 1) == 'visa':
+    import visa
+    rm = visa.ResourceManager()
 else:
     print "No interface defined!"
     quit()
@@ -55,12 +58,16 @@ class scpi_meter():
 
     def __init__(self,gpib,reflevel,name):
         self.gpib = gpib
-	print "\033[6;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keithley 2002\033[0;39m" % self.gpib
+	print "\033[5;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keithley 2002\033[0;39m" % self.gpib
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
             self.inst = vxi11.Instrument(cfg.get('teckit', 'vxi_ip', 1), "gpib0,%d" % self.gpib) # VXI link
-            self.inst.timeout = 180
+            self.inst.timeout = 20
+        elif cfg.get('teckit', 'interface', 1) == 'visa':
+            self.inst = rm.open_resource('GPIB::%d::INSTR' % self.gpib)
+            self.inst.timeout = 300000 # timeout delay in ms
+
         self.reflevel = reflevel
         self.name = name
         self.init_inst()
@@ -73,7 +80,7 @@ class scpi_meter():
         self.inst.write(":SYST:AZER:TYPE SYNC")
         self.inst.write(":SYST:LSYN:STAT ON")
 	self.inst.write(":SENS:FUNC 'FRES'")
-	self.inst.write(":SENS:FRES:DIG 9;NPLC 10;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:FRES:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
 	self.inst.write(":SENS:FRES:AVER:STAT ON")
 	self.inst.write(":SENS:FRES:OCOM ON")
 	self.inst.write(":SENS:FRES:RANG 20E3")
@@ -92,8 +99,6 @@ class scpi_meter():
 	self.inst.write("*CLR")
         self.inst.write(":SYST:AZER:TYPE SYNC")
         self.inst.write(":SYST:LSYN:STAT ON")
-	self.inst.write(":INP:PRE:STAT OFF")
-	#self.inst.write(":INP:PRE:FILT FAST")
 	#self.inst.write(":sens:temp:tran rtd")      #select thermistor
 	#self.inst.write(":sens:temp:rtd:type user") #10 kOhm thermistor
 	#self.inst.write(":sens:temp:rtd:alph 0.00375") #10 kOhm thermistor
@@ -104,7 +109,7 @@ class scpi_meter():
         #self.inst.write(":SENS:TEMP:DIG 7")
         #self.inst.write(":SENS:TEMP:NPLC 10")
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
-	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 30;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 10;AVER:COUN 10;TCON MOV")
 	self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
 	self.inst.write(":SENS:VOLT:DC:RANG 20")
         self.inst.write(":FORM:ELEM READ")
@@ -126,8 +131,7 @@ class scpi_meter():
     def set_ohmf_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'FRES'")
-	self.inst.write(":SENS:FRES:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
-	self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
+	self.inst.write(":SENS:FRES:DIG 9;NPLC 50;AVER:COUN 10;TCON MOV")
 	if (float(cmd)) <= 21e3:
 	    self.inst.write(":SENS:FRES:OCOM ON")
 	else:
@@ -137,14 +141,19 @@ class scpi_meter():
     def set_ohm_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'RES'")
-	self.inst.write(":SENS:RES:DIG 9;NPLC 30;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:RES:DIG 9;NPLC 50;AVER:COUN 10;TCON MOV")
 	self.inst.write(":SENS:RES:OCOM OFF")
 	self.inst.write(":SENS:RES:RANG %.2f" % cmd)
 
     def set_dcv_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
-	self.inst.write(":SENS:VOLT:DC:RANG %.4e" % cmd)
+	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 20;RANG %.2f" % cmd)
+
+    def set_dci_range(self,cmd):
+        # Setup SCPI DMM
+	self.inst.write(":SENS:FUNC 'CURR:DC'")
+	self.inst.write(":SENS:CURR:DC:DIG 9;NPLC 50;RANG %.2f" % cmd)
 
     def trigger(self):
 	self.inst.write("READ?")
@@ -193,4 +202,7 @@ class scpi_meter():
 
     def get_data_status(self):
         return self.status_flag
+
+    def vfd_msg(self, string):
+	self.inst.write(":DISP:WIND:TEXT:DATA \"%s\";STAT ON;" % string)
 

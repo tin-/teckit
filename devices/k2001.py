@@ -15,6 +15,9 @@ if cfg.get('teckit', 'interface', 1) == 'gpib':
     import Gpib
 elif cfg.get('teckit', 'interface', 1) == 'vxi':
     import vxi11
+elif cfg.get('teckit', 'interface', 1) == 'visa':
+    import visa
+    rm = visa.ResourceManager()
 else:
     print "No interface defined!"
     quit()
@@ -54,6 +57,10 @@ class scpi_meter():
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
             self.inst = vxi11.Instrument(cfg.get('teckit', 'vxi_ip', 1), "gpib0,%d" % self.gpib) # VXI link
             self.inst.timeout = 180
+        elif cfg.get('teckit', 'interface', 1) == 'visa':
+            self.inst = rm.open_resource('GPIB::%d::INSTR' % self.gpib)
+            self.inst.timeout = 300000 # timeout delay in ms
+
         self.reflevel = reflevel
         self.name = name
         self.init_inst()

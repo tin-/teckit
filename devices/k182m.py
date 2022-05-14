@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/k182m.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
+# $Id: devices/k182m.py | Rev 45  | 2021/01/25 07:14:53 tin_fpga $
 # xDevs.com Keithley 182 nVmeter module
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -24,6 +24,9 @@ if cfg.get('teckit', 'interface', 1) == 'gpib':
     import Gpib
 elif cfg.get('teckit', 'interface', 1) == 'vxi':
     import vxi11
+elif cfg.get('teckit', 'interface', 1) == 'visa':
+    import visa
+    rm = visa.ResourceManager()
 else:
     print "No interface defined!"
     quit()
@@ -63,6 +66,10 @@ class k182m_meter():
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
             self.inst = vxi11.Instrument(cfg.get('teckit', 'vxi_ip', 1), "gpib0,%d" % self.gpib) # VXI link
             self.inst.timeout = 180
+        elif cfg.get('teckit', 'interface', 1) == 'visa':
+            self.inst = rm.open_resource('GPIB::%d::INSTR' % self.gpib)
+            self.inst.timeout = 300000 # timeout delay in ms
+
         self.reflevel = reflevel
         self.name = name
         self.init_inst()
@@ -72,7 +79,7 @@ class k182m_meter():
         #self.inst.clear()
         self.inst.write("B1X")     # 6.5 digit resolution
         self.inst.write("F0G0X")   # Latest A/D reading, reading without prefix
-        self.inst.write("O1P1N1W0X") # Enabled analog filter, medium dig filter, disabled
+        self.inst.write("O0P0N0W0X") # Enabled analog filter, medium dig filter, disabled
         self.inst.write("R4X")     # Range 30mV (2), 3mV - R1, R3 - 300mV, R4 = 3V
         self.inst.write("S2X")     # NPLC 5
         self.inst.write("T4X")     # Trigger on X multiple
