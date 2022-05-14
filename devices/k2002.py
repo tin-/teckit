@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/k2002.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
+# $Id: devices/k2002.py | Rev 46  | 2021/09/24 20:26:29 tin_fpga $
 # xDevs.com Keithley 2002 module
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -22,6 +22,9 @@ if cfg.get('teckit', 'interface', 1) == 'gpib':
     import Gpib
 elif cfg.get('teckit', 'interface', 1) == 'vxi':
     import vxi11
+elif cfg.get('teckit', 'interface', 1) == 'visa':
+    import visa
+    rm = visa.ResourceManager()
 else:
     print "No interface defined!"
     quit()
@@ -55,15 +58,19 @@ class scpi_meter():
 
     def __init__(self,gpib,reflevel,name):
         self.gpib = gpib
-	print "\033[6;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keithley 2002\033[0;39m" % self.gpib
+	print "\033[5;5H \033[0;31mGPIB[\033[1m%2d\033[0;31m] : Keithley 2002\033[0;39m" % self.gpib
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
             self.inst = vxi11.Instrument(cfg.get('teckit', 'vxi_ip', 1), "gpib0,%d" % self.gpib) # VXI link
-            self.inst.timeout = 180
+            self.inst.timeout = 20
+        elif cfg.get('teckit', 'interface', 1) == 'visa':
+            self.inst = rm.open_resource('GPIB::%d::INSTR' % self.gpib)
+            self.inst.timeout = 300000 # timeout delay in ms
+
         self.reflevel = reflevel
         self.name = name
-        self.init_inst_dummy()
+        self.init_inst()
 
     def init_inst_fres(self):
         # Setup SCPI DMM
@@ -102,7 +109,7 @@ class scpi_meter():
         #self.inst.write(":SENS:TEMP:DIG 7")
         #self.inst.write(":SENS:TEMP:NPLC 10")
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
-	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 10;AVER:COUN 10;TCON MOV")
 	self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
 	self.inst.write(":SENS:VOLT:DC:RANG 20")
         self.inst.write(":FORM:ELEM READ")
@@ -134,14 +141,19 @@ class scpi_meter():
     def set_ohm_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'RES'")
-	self.inst.write(":SENS:RES:DIG 9;NPLC 30;AVER:COUN 10;TCON MOV")
+	self.inst.write(":SENS:RES:DIG 9;NPLC 50;AVER:COUN 10;TCON MOV")
 	self.inst.write(":SENS:RES:OCOM OFF")
 	self.inst.write(":SENS:RES:RANG %.2f" % cmd)
 
     def set_dcv_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
-	self.inst.write(":SENS:VOLT:DC:RANG %.2f" % cmd)
+	self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 20;RANG %.2f" % cmd)
+
+    def set_dci_range(self,cmd):
+        # Setup SCPI DMM
+	self.inst.write(":SENS:FUNC 'CURR:DC'")
+	self.inst.write(":SENS:CURR:DC:DIG 9;NPLC 50;RANG %.2f" % cmd)
 
     def trigger(self):
 	self.inst.write("READ?")
@@ -190,4 +202,7 @@ class scpi_meter():
 
     def get_data_status(self):
         return self.status_flag
+
+    def vfd_msg(self, string):
+	self.inst.write(":DISP:WIND:TEXT:DATA \"%s\";STAT ON;" % string)
 

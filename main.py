@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: main.py | Rev 40  | 2019/01/10 03:29:21 tin_fpga $
+# $Id: main.py | Rev 44  | 2020/02/13 19:28:25 tin_fpga $
 # xDevs.com TEC Experiment app 
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -85,45 +85,56 @@ else:
         ext_pressure = 0    
 
 if (cfg.get('mode', 'no_thermal', 1) == "false") and (debug_en == 0):
-    k2510  = imp.load_source('k2510' , 'devices/k2510.py')              # Load Keithley 2510 support
+    #k2510  = imp.load_source('k2510' , 'devices/k2510.py')              # Load Keithley 2510 support
+    #k2510  = imp.load_source('tecpak' , 'devices/tecpak.py')              # Load Arroyo TECpak support
+    k2510  = imp.load_source('torrey' , 'devices/torrey.py')              # Load Keithley 2510 support
 
 if (debug_en == 0):
-    #trm1   = imp.load_source('chub', 'devices/f1529.py')                    # Load Fluke 1529 support
-    #dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-    #dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+    trm1   = imp.load_source('gtemp', 'devices/g9540.py')                    # Load Fluke 1529 support
+    dmm1   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+    psu1   = imp.load_source('hp6653', 'devices/hp6653a.py')                 # Load Keysight 6653A support
+    dmm2   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
     #dmm4   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
-    #dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
+    dmm3   = imp.load_source('hp3458', 'devices/hp3458.py')                 # Load Keysight 3458A support
     #dmm5   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
     #dmm6   = imp.load_source('k2002' , 'devices/k2002.py')                  # Load Keithley 2002 support
-    dmm7   = imp.load_source('d1281' , 'devices/d1281.py')                # Load Fluke 8508A support
+    dmm4   = imp.load_source('d1281' , 'devices/d1281.py')                # Load Fluke 8508A support
+    dmm5   = imp.load_source('d1281' , 'devices/d1281.py')                # Load Fluke 8508A support
     #em1    = imp.load_source('hp53131' , 'devices/hp53131a.py')             # Load support for K6517
     #dmm5   = imp.load_source('r6581t' , 'devices/r6581t.py')                # Load support for R6581T
     #ilx5910= imp.load_source('ilx5910', 'devices/ilx.py')                   # Load support for ILX 5910B
     #dmm5   = imp.load_source('k2182' , 'devices/k2182.py')                  # Load support for K2002
-    #dmm6   = imp.load_source('k2182' , 'devices/k2182.py')                  # Load support for K2002
+    dmm6   = imp.load_source('k2182' , 'devices/k2182.py')                  # Load support for K2002
     #dmm7   = imp.load_source('k182m' , 'devices/k182m.py')                  # Load support for K182M
     #mfc    = imp.load_source('f5700', 'devices/f5700a.py')                  # Load support for F5700A
     #scan = k7168_client.THP_socket('192.168.1.114',10001)                  # External scanner
 
-    #trm1 = trm1.chub_meter(17,0,"1529")  # GPIB 17
-    #dmm1 = dmm1.dmm_meter (3,0,"3458A")  # GPIB 
-    #dmm2 = dmm2.dmm_meter (2,0,"3458B")  # GPIB 
+    psu = psu1.psu_src (10,0,"6653A")  # GPIB 
+
+    trm1 = trm1.dmm_meter(17,0,"9540")  # GPIB 17
+    dmm1 = dmm1.dmm_meter (3,0,"3458SA")  # GPIB 
+    dmm2 = dmm2.dmm_meter (4,0,"3458SB")  # GPIB 
     #dmm4 = dmm4.dmm_meter (11,0,"3458C") # GPIB 
-    #dmm3 = dmm3.dmm_meter (10,0,"3458D") # GPIB 
+    dmm3 = dmm3.dmm_meter (5,0,"3458C") # GPIB 
     #dmm5 = dmm5.scpi_meter(4,0,"2002-4") # GPIB 
-    #dmm6 = dmm6.scpi_meter(6,0,"2002-6") # GPIB 
-    dmm7 = dmm7.flk_meter(16,0,"D1281")
+    dmm6 = dmm6.scpi_meter(14,0,"2182") # GPIB 
+    dmm4 = dmm4.flk_meter(16,0,"D1281B")
+    dmm5 = dmm5.flk_meter(9,0,"D1281T")
     #cntr = em1.cntr(3,0,"53131A")
-    #dmm5 = dmm5.scpi_meter(9,0,"6581T")
+    #dmm5 = dmm5.scpi_meter(13,0,"6581T")
     #dmm7 = dmm7.k182m_meter(18,0,"2182")
 
+    dmm1.set_dcv_range(10)                                                # 3458D function/range config
+    #dmm2.set_dcv_range(10)                                                # 3458D function/range config
+    dmm3.set_dcv_range(10)                                                # 3458D function/range config
     #dmm1.set_ohmf_range(100e3)                                                # 3458A function/range config
-    #dmm2.set_ohmf_range(10e3)                                                # 3458B function/range config
-    #dmm3.set_dci_range(0.10)                                                # 3458C function/range config
-    #dmm4.set_dcv_range(10)                                                # 3458D function/range config
+    dmm2.set_dcv_range(10)                                                # 3458B function/range config
+    dmm4.set_input("FRONT")
+    dmm4.set_dcv_range(10)                                                # 3458C function/range config
+    dmm5.set_input("CHA")
+    dmm5.set_tohm_range(10e3)                                                # 3458C function/range config
     #dmm6.set_ohmf_range(200)                                                # K2002-6 function/range config
-    dmm7.set_tohm_range(10e3)                                                # K2002-4 function/range config
-    #dmm5.set_ohmf_range(200)                                                # 3458D function/range config
+    #dmm7.set_tohm_range(10e3)                                                # K2002-4 function/range config
     #dmm6.set_tohm_range(1)                                                # F8508A function/range config
 
     # Some unused configuration code for other meters
@@ -134,7 +145,7 @@ if (debug_en == 0):
     #dmm2.set_dcv4w_range(10) # 3459b
     #dmm4.set_pt1000_rtd() #4
     #dmm1.set_d_range(10) #4
-    #dmm2.set_dcv_range(10) #4
+    dmm6.set_dcv_nrange(10,1) #4
 
 # Module support for Delta-resistance measurement modes
 if cfg.get('testset', 'mode', 1) == 'delta3':
@@ -192,7 +203,7 @@ pid_kd              = float(cfg.get('pid', 'kd', 1))                    # D coef
 
 if (cfg.get('mode', 'no_thermal', 1) == "false") and (debug_en == 0):
     # If thermal control activated, perform initialization for PID hardware
-    tecsmu = k2510.tec_meter(25,0,"2510")
+    tecsmu = k2510.tec_meter(25,0,"585")
     tecsmu.set_tmp("%5.3f" % sv_start)
     tecsmu.set_gain(pid_kp)
     tecsmu.set_intg(pid_ki)
@@ -215,6 +226,8 @@ meas_val5           = 0.0                                               # DUT5 r
 meas_val6           = 0.0                                               # DUT6 reading
 meas_val7           = 0.0                                               # DUT7 reading
 meas_val8           = 0.0                                               # DUT8 reading
+psu_volt = 0
+psu_curr = 0
 dmm1_temp           = 26                                                # DMM1 TEMP? value
 dmm2_temp           = 26                                                # DMM2 TEMP? value
 dmm3_temp           = 26                                                # DMM3 TEMP? value
@@ -261,16 +274,16 @@ print "\033[12;2H \033[1;32mPeak temp    : %.3f %cC\033[0;39m" % (peak_temp, u"\
 
 icnt = 0
 if (debug_en == 0):
-    dmm1_temp = 0#dmm1.get_temp()
-    dmm2_temp = 0#dmm2.get_temp()
-    dmm3_temp = 0#dmm3.get_temp()
+    dmm1_temp = dmm1.get_temp()
+    dmm2_temp = dmm2.get_temp()
+    dmm3_temp = dmm3.get_temp()
     dmm4_temp = 0#dmm4.get_temp()
 tread = int(cfg.get('dmm', 'readtemp_period', 1))
 
 if (cfg.get('mode', 'run_acal', 1) == "true") and (debug_en == 0):
     dmm1.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
     dmm2.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
-    #dmm3.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
+    dmm3.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
     #dmm4.inst.write("ACAL ALL") # Start ACAL sequence for 3458A
     print "\033[18;3H-i- Started ACAL ALL for 860 seconds"
     dormant(860)
@@ -279,7 +292,7 @@ if (cfg.get('mode', 'run_acal', 1) == "true") and (debug_en == 0):
 if (cfg.get('mode', 'run_acal_dcv', 1) == "true") and (debug_en == 0):
     dmm1.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
     dmm2.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
-    #dmm3.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
+    dmm3.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
     #dmm4.inst.write("ACAL DCV") # Start ACAL sequence for 3458A
     print "\033[18;3H-i- Started ACAL DCV for 150 seconds"
     dormant(150)
@@ -299,6 +312,10 @@ timing_step   = 1.0
 
 print "\033[30;5H \033[0;35mREF    A:%11.6G  B:%11.6G  C:%11.6G  D:%11.6G  E:%11.6G \033[0;39m" % (reference1, reference2, reference3, reference4, reference5)
 print "\033[36;0H"
+
+psu.set_vout(12.5)
+psu.set_cout(12)
+psu.output_en()
 
 # Main ramp loop
 while (idx <= (total_time / tps) ):
@@ -446,34 +463,40 @@ while (idx <= (total_time / tps) ):
         tec_curr = 0.0
     
     if (debug_en == 0):
-        nvm_temp = 24#trm1.get_data() #CHUB
+        nvm_temp = trm1.get_data() #CHUB
     else:
         nvm_temp = 20
 
     # Trigger instruments to start conversion in normal mode
     if (delta_res == 0) and (debug_en == 0):
-        #dmm1.trigger()
-        #dmm2.trigger()
-        #dmm3.trigger()
+        dmm1.trigger()
+        dmm2.trigger()
+        dmm3.trigger()
         #dmm4.trigger()
         #dmm5.trigger()
         #dmm6.trigger()
         # Collect measurement results
-        meas_val  = 0#dmm1.read_val()[1]
-        meas_val2 = 0#dmm2.read_val()[1]
-        meas_val3 = 0#dmm3.read_val()[1]
-        meas_val4 = 0#dmm4.read_val()[1]
-        meas_val5 = 0# dmm5.get_data()
-        meas_val6 = 0#dmm6.get_data()
-        meas_val7 = dmm7.get_data()
-        meas_val8 = 0 #
+        meas_val  = dmm1.read_val()[1]
+        meas_val2 = dmm2.read_val()[1]
+        meas_val3 = dmm3.read_val()[1]#dmm3.read_val()[1]
+        meas_val4 = dmm4.get_data() #16
+        #dmm5.set_input("CH_A")
+        meas_val5 = dmm5.get_data() #9
+        meas_val6 = dmm6.get_adata()
+        meas_val7 = trm1.get_data()
+        #dmm5.set_input("FRONT")
+	meas_val8 = 0#dmm5.get_data() 
+        psu.trigger("VOLT?")
+	psu_volt = psu.get_data()
+        psu.trigger("CURR?")
+        psu_curr = psu.get_data() #
     elif (debug_en == 1):
         #Debug TECKit samples
         meas_val  = idx
         meas_val2 = sv_temp
         meas_val3 = pv_temp
         meas_val4 = tps
-        meas_val5 = 0 # dmm5.get_data()
+        meas_val5 = dmm5.get_data()
         meas_val6 = (total_time / tps)
         meas_val7 = 0 #
         meas_val8 = 0 #
@@ -498,9 +521,9 @@ while (idx <= (total_time / tps) ):
 
     tread = tread - 1
     if (tread == 0) and (debug_en == 0):
-        dmm1_temp = 24#dmm1.get_temp()
-        dmm2_temp = 24#dmm2.get_temp()
-        dmm3_temp = 24#dmm3.get_temp()
+        dmm1_temp = dmm1.get_temp()
+        dmm2_temp = dmm2.get_temp()
+        dmm3_temp = dmm3.get_temp()
         dmm4_temp = 24#dmm4.get_temp()
         tread = int(cfg.get('dmm', 'readtemp_period', 1))
 
@@ -508,14 +531,14 @@ while (idx <= (total_time / tps) ):
     print "\033[10;88H \033[1;32m%2.3f %cC\033[0;39m" % (pv_temp, u"\u00b0")
     print "\033[11;88H \033[1;35m%5.4f \033[0;39m" % (tec_curr)
     print "\033[10;55H \033[1;38m%11.8f\033[0;39m" % (meas_val)
-    print ("\033[31;3H \033[1;32mMedian A= %.8f      " % np.median(sdev_arr7) )
-    print ("\033[32;3H \033[1;32m Sdev A = %.4G     " % ( np.std(sdev_arr7) ) )
+    print ("\033[31;3H \033[1;32mMedian A= %.8f      " % np.median(sdev_arr5) )
+    print ("\033[32;3H \033[1;32m Sdev A = %.4G     " % ( np.std(sdev_arr5) ) )
 
-    print ("\033[31;28H\033[1;33mB=%.8f " % np.median(sdev_arr2) )
-    print ("\033[31;45H\033[1;34mC=%.8f " % np.median(sdev_arr3) )
-    print ("\033[31;62H\033[1;35mD=%.8f " % np.median(sdev_arr4) )
-    print ("\033[31;79H\033[1;36mE=%.8f " % np.median(sdev_arr5) )
-    print ("\033[32;28H\033[1;33mB=%.4G " % ( np.std(sdev_arr2) ) )
+    print ("\033[31;28H\033[1;33mB=%.8G " % np.median(sdev_arr6) )
+    print ("\033[31;45H\033[1;34mC=%.8G " % np.median(sdev_arr3) )
+    print ("\033[31;62H\033[1;35mD=%.8G " % np.median(sdev_arr4) )
+    print ("\033[31;79H\033[1;36mE=%.8G " % np.median(sdev_arr5) )
+    print ("\033[32;28H\033[1;33mB=%.4G " % ( np.std(sdev_arr6) ) )
     print ("\033[32;45H\033[1;34mC=%.4G " % ( np.std(sdev_arr3) ) )
     print ("\033[32;62H\033[1;35mD=%.4G " % ( np.std(sdev_arr4) ) )
     print ("\033[32;79H\033[1;36mE=%.4G " % ( np.std(sdev_arr5) ) )
@@ -529,26 +552,30 @@ while (idx <= (total_time / tps) ):
     ppm_delta6 = ((meas_val6 / reference6) - 1) * 1e6
     ppm_delta7 = ((meas_val7 / reference7) - 1) * 1e6
     ppm_delta8 = ((meas_val8 / reference8) - 1) * 1e6
-    print "\033[33;13H\033[1;32m %9.3f\033[0;39m" % (ppm_delta7)
+    print "\033[33;13H\033[1;32m %9.3f\033[0;39m" % (ppm_delta)
     print "\033[33;30H\033[1;33m %9.3f\033[0;39m" % (ppm_delta2)
     print "\033[33;47H\033[1;34m %9.3f\033[0;39m" % (ppm_delta3)
     print "\033[33;66H\033[1;35m %9.3f\033[0;39m" % (ppm_delta4)
     print "\033[33;81H\033[1;36m %9.3f ppm\033[0;39m" % (ppm_delta5)
     #print "\033[47;43H\033[1;34m%11.3f\033[0;39m" % (ppm_delta6)
     #print "\033[48;43H\033[1;34m%11.3f\033[0;39m" % (ppm_delta7)
+
+    if (psu_curr >= 12.5):
+	print ("PSU overcurrent >12.5 detected, shutting down!")
+	psu.output_dis()
+	quit()
     
     # Data storage logic goes here
     if (icnt >= 12):
         icnt = 0
-    print ("\033[%d;3H[%6d] S%5.3f P%5.3f T%5.3f \033[1;34m A%12.9e \033[0;32mB%12.9e \033[0;33mC%12.9e C\033[0;39m" % (icnt+17, idx, sv_temp, pv_temp, nvm_temp, meas_val7, meas_val2, meas_val3) ) 
+    print ("\033[%d;3H[%6d] S%5.3f P%5.3f T%5.3f \033[1;34m A%12.9e \033[0;32mB%12.9e \033[0;33mC%12.9e C\033[0;39m" % (icnt+17, idx, sv_temp, pv_temp, nvm_temp, meas_val5, meas_val6, meas_val2) ) 
     icnt = icnt + 1
     if irc_active:
         itext = irc.get_text() 
         irc.write_text(ichannel, "Data: %.8f %.8f %.8f %.8f %.8f F1529: %.3f Ambient: %.2fC" % (meas_val, meas_val2, meas_val3, meas_val4, meas_val6, float(nvm_temp), ext_temp ) )
-
     with open(fileName4, 'a') as o1:  # Open file handles for storing values
-        o1.write (time.strftime("%d/%m/%Y-%H:%M:%S;") + ("%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%3.1f;%3.1f;%3.1f;%3.1f;%3.3f;%3.1f;%4.1f;%3.3f;%3.3f;\n" % \
-(float(meas_val),float(meas_val2),float(meas_val3),float(meas_val4),float(meas_val5),float(meas_val6),float(meas_val7),float(meas_val8), float(dmm1_temp), float(dmm2_temp),float(dmm3_temp),float(dmm4_temp),float(ext_temp),float(ext_rh),float(ext_pressure),pv_temp, float(nvm_temp)) ) )
+        o1.write (time.strftime("%d/%m/%Y-%H:%M:%S;") + ("%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%2.9e;%3.1f;%3.1f;%3.1f;%3.1f;%3.3f;%3.1f;%4.1f;%3.3f;%3.3f;%4.3f;%5.3f;%5.3f\n" % \
+(float(meas_val),float(meas_val2),float(meas_val3),float(meas_val4),float(meas_val5),float(meas_val6),float(meas_val7),float(meas_val8), float(dmm1_temp), float(dmm2_temp),float(dmm3_temp),float(dmm4_temp),float(ext_temp),float(ext_rh),float(ext_pressure),pv_temp,float(nvm_temp),float(tec_curr),float(psu_volt),float(psu_curr)) ) )
         sys.stdout.flush()
         o1.close()
     
@@ -562,5 +589,7 @@ if (cfg.get('mode', 'no_thermal', 1) == "false") and (debug_en == 0):
     tecsmu.off_temp()
 
 print "\033[2J TECKit run complete."
-mfc    = imp.load_source('f5720', 'devices/f5720a.py')                  # Load support for F5700A
+psu.output_dis()
+
+#mfc    = imp.load_source('f5720', 'devices/f5720a.py')                  # Load support for F5700A
 quit()

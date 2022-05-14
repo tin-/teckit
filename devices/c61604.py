@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/f8508a.py | Rev 46  | 2021/09/24 20:26:29 tin_fpga $
+# $Id: devices/c61604.py | Rev 45  | 2021/01/25 07:14:53 tin_fpga $
 # xDevs.com Fluke 8508A module
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -50,7 +50,7 @@ class Timeout():
   def raise_timeout(self, *args):
     raise Timeout.Timeout()
 
-class flk_meter():
+class source():
     temp = 38.5
     data = ""
     status_flag = 1
@@ -58,7 +58,7 @@ class flk_meter():
 
     def __init__(self,gpib,reflevel,name):
         self.gpib = gpib
-        print "\033[4;5H \033[0;34mGPIB[\033[1m%2d\033[0;31m] : Fluke 8508A/01\033[0;39m" % self.gpib
+        print "\033[2;5H \033[0;34mGPIB[\033[1m%2d\033[0;31m] : Chroma 61604\033[0;39m" % self.gpib
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
@@ -70,21 +70,7 @@ class flk_meter():
 
         self.reflevel = reflevel
         self.name = name
-        self.init_inst()
-
-    def init_inst_fres(self):
-        # Setup SCPI DMM
-        self.inst.clear()
-	self.inst.write("*RST")
-	self.inst.write("*CLR")
-        self.inst.write(":SYST:AZER:TYPE SYNC")
-        self.inst.write(":SYST:LSYN:STAT ON")
-	self.inst.write(":SENS:FUNC 'FRES'")
-	self.inst.write(":SENS:FRES:DIG 9;NPLC 30;AVER:COUN 10;TCON MOV")
-	self.inst.write(":SENS:FRES:AVER:STAT ON")
-	self.inst.write(":SENS:FRES:OCOM ON")
-	self.inst.write(":SENS:FRES:RANG 20E3")
-        self.inst.write(":FORM:ELEM READ")
+        self.init_inst_dummy()
 
     def init_inst_dummy(self):
         # Setup SCPI DMM
@@ -97,35 +83,6 @@ class flk_meter():
 	self.inst.write("*CLR")
         self.inst.write("TRG_SRCE EXT")
         #self.inst.write("GUARD EXT")
-        #self.inst.write(":SYST:LSYN:STAT ON")
-	#self.inst.write(":sens:temp:tran rtd")      #select thermistor
-	#self.inst.write(":sens:temp:rtd:type user") #10 kOhm thermistor
-	#self.inst.write(":sens:temp:rtd:alph 0.00375") #10 kOhm thermistor
-	#self.inst.write(":sens:temp:rtd:beta 0.160") #10 kOhm thermistor
-	#self.inst.write(":sens:temp:rtd:delt 1.605") #10 kOhm thermistor
-	#self.inst.write(":sens:temp:rtd:rzer 1000") #10 kOhm thermistor
-        #self.inst.write(":SENS:FUNC 'TEMP'")
-        #self.inst.write(":SENS:TEMP:DIG 7")
-        #self.inst.write(":SENS:TEMP:NPLC 10")
-	#self.inst.write(":SENS:FUNC 'VOLT:DC'")
-	#self.inst.write(":SENS:VOLT:DC:DIG 9;NPLC 20;AVER:COUN 10;TCON MOV")
-	#self.inst.write(":SENS:VOLT:DC:AVER:STAT ON")
-	#self.inst.write(":SENS:VOLT:DC:RANG 20")
-        #self.inst.write(":FORM:ELEM READ")
-#        self.inst.write(":DISP:WIND:TEXT:DATA \"               \";STAT ON;")
-#        self.inst.write(":DISP:WIND2:TEXT:DATA \"               \";STAT ON;")
-#        #kei.write("READ?")
-
-    def set_pt1000_rtd(self):
-	self.inst.write(":sens:temp:tran rtd")      #select thermistor
-	self.inst.write(":sens:temp:rtd:type user") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:alph 0.00375") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:beta 0.160") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:delt 1.605") #10 kOhm thermistor
-	self.inst.write(":sens:temp:rtd:rzer 1000") #10 kOhm thermistor
-        self.inst.write(":SENS:FUNC 'TEMP'")
-        self.inst.write(":SENS:TEMP:DIG 7")
-        self.inst.write(":SENS:TEMP:NPLC 10")
 
     def set_ohmf_range(self,cmd):
         # Setup SCPI DMM
@@ -148,7 +105,6 @@ class flk_meter():
 	self.inst.write("DCI FILT_OFF,RESL7,FAST_OFF")
 	self.inst.write("INPUT FRONT")
 	self.inst.write("AVG OFF")
-
 
     def set_dcv4w_range_avg16(self,cmd):
         # Setup SCPI DMM
@@ -192,9 +148,6 @@ class flk_meter():
 	self.inst.write("AVG OFF")
 #	self.inst.write("DELAY 2")
 
-    def set_input(self,cmd):
-	self.inst.write("INPUT %s" % cmd)
-
     def set_ohm_range(self,cmd):
         # Setup SCPI DMM
 
@@ -228,12 +181,12 @@ class flk_meter():
             return (0,float(0)) # Exception on float conversion, 0 = error
         return (1,data_float) # Good read, 1 = converted to float w/o exception
 
-    def get_data(self):
-        self.status_flag,data = self.read_data("X?")
+    def get_data(self,cmd):
+        self.status_flag,data = self.read_data("FETC:SCAL:%s?" % cmd)
 	#print self.data
         if (self.status_flag):
             self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
-        return self.data
+        return float(self.data)
 
     def get_data_status(self):
         return self.status_flag

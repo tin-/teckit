@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/b2987a.py | Rev 42  | 2019/01/10 07:31:01 clu_wrk $
+# $Id: devices/b2987a.py | Rev 45  | 2021/01/25 07:14:53 tin_fpga $
 # xDevs.com B2987A module
 # Copyright (c) 2012-2019, xDevs.com
 # 
@@ -22,6 +22,9 @@ if cfg.get('teckit', 'interface', 1) == 'gpib':
     import Gpib
 elif cfg.get('teckit', 'interface', 1) == 'vxi':
     import vxi11
+elif cfg.get('teckit', 'interface', 1) == 'visa':
+    import visa
+    rm = visa.ResourceManager()
 else:
     print "No interface defined!"
     quit()
@@ -59,8 +62,11 @@ class em_meter():
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
-            self.inst = vxi11.Instrument(cfg.get('teckit', 'em_ip')) # VXI link
+            self.inst = vxi11.Instrument(cfg.get('teckit', 'em_ip'), "gpib0,%d" % self.gpib) # VXI link
             self.inst.timeout = 180
+        elif cfg.get('teckit', 'interface', 1) == 'visa':
+            self.inst = rm.open_resource('GPIB::%d::INSTR' % self.gpib)
+            self.inst.timeout = 300000 # timeout delay in ms
         self.reflevel = reflevel
         self.name = name
         self.init_inst_dummy()
@@ -81,9 +87,9 @@ class em_meter():
 
     def init_inst_dummy(self):
         # Setup SCPI DMM
-	self.inst.write("*CLR")
-	self.inst.write(":SENS1:CURR:DC:NPLC 100")
-	self.inst.write(":SENS1:VOLT:DC:NPLC 100")
+	#self.inst.write(":INP ON")
+	#self.inst.write(":SENS1:CURR:DC:NPLC 100")
+	#self.inst.write(":SENS1:VOLT:DC:NPLC 100")
         #self.inst.write(":SYST:AZER:TYPE SYNC")
         #self.inst.write(":SYST:LSYN:STAT ON")
         #self.inst.write(":FORM:ELEM READ")
@@ -143,6 +149,12 @@ class em_meter():
 	self.inst.write(":SENS:RES:OCOM OFF")
 	self.inst.write(":SENS:RES:RANG %.2f" % cmd)
 
+    def set_curr_range(self,cmd):
+        # Setup SCPI DMM
+	self.inst.write(":SENS:CURR:RANG:AUTO OFF")
+	self.inst.write(":SENS:CURR:NPLC 100")
+	self.inst.write(":SENS:CURR:RANG %.2e" % cmd)
+
     def set_dcv_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write(":SENS:FUNC 'VOLT:DC'")
@@ -159,6 +171,39 @@ class em_meter():
 
     def trigger(self):
 	self.inst.write("READ?")
+
+    def get_curr(self):
+        # Setup SCPI DMM
+	self.inst.write(":FORM:ELEM:SENS CURR")
+	self.inst.write(":MEAS?")
+        #self.status_flag
+	self.data = self.inst.read()
+	#print self.data
+        #if (self.status_flag):
+        #    self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
+        return float(self.data)
+
+    def get_volt(self):
+        # Setup SCPI DMM
+	self.inst.write(":FORM:ELEM:SENS VOLT")
+	self.inst.write(":MEAS?")
+        #self.status_flag
+	self.data = self.inst.read()
+	#print self.data
+        #if (self.status_flag):
+        #    self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
+        return float(self.data)
+
+    def get_ohm(self):
+        # Setup SCPI DMM
+	self.inst.write(":FORM:ELEM:SENS RES")
+	self.inst.write(":MEAS?")
+        #self.status_flag
+	self.data = self.inst.read()
+	#print self.data
+        #if (self.status_flag):
+        #    self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
+        return float(self.data)
 
     def read_val(self):
         data_float = 0.0

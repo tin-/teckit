@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# $Id: devices/f8508a.py | Rev 46  | 2021/09/24 20:26:29 tin_fpga $
-# xDevs.com Fluke 8508A module
+# $Id: devices/w4920m.py | Rev 45  | 2021/01/25 07:14:53 tin_fpga $
+# xDevs.com Datron 1281 module
 # Copyright (c) 2012-2019, xDevs.com
 # 
 # Python 2.7 | RPi3 
@@ -22,9 +22,6 @@ if cfg.get('teckit', 'interface', 1) == 'gpib':
     import Gpib
 elif cfg.get('teckit', 'interface', 1) == 'vxi':
     import vxi11
-elif cfg.get('teckit', 'interface', 1) == 'visa':
-    import visa
-    rm = visa.ResourceManager()
 else:
     print "No interface defined!"
     quit()
@@ -50,7 +47,7 @@ class Timeout():
   def raise_timeout(self, *args):
     raise Timeout.Timeout()
 
-class flk_meter():
+class dat_meter():
     temp = 38.5
     data = ""
     status_flag = 1
@@ -58,16 +55,12 @@ class flk_meter():
 
     def __init__(self,gpib,reflevel,name):
         self.gpib = gpib
-        print "\033[4;5H \033[0;34mGPIB[\033[1m%2d\033[0;31m] : Fluke 8508A/01\033[0;39m" % self.gpib
+        print "\033[3;5H \033[0;33mGPIB[\033[1m%2d\033[0;33m] : Datron 1281\033[0;39m" % self.gpib
         if cfg.get('teckit', 'interface', 1) == 'gpib':
             self.inst = Gpib.Gpib(0, self.gpib, timeout = 180) # GPIB link
         elif cfg.get('teckit', 'interface', 1) == 'vxi':
-            self.inst = vxi11.Instrument(cfg.get('teckit', 'vxib_ip', 1), "gpib0,%d" % self.gpib) # VXI link
-            self.inst.timeout = 180
-        elif cfg.get('teckit', 'interface', 1) == 'visa':
-            self.inst = rm.open_resource('GPIB::%d::INSTR' % self.gpib)
-            self.inst.timeout = 300000 # timeout delay in ms
-
+            self.inst = vxi11.Instrument(cfg.get('teckit', 'dvxi_ip', 1), "gpib0,%d" % self.gpib) # VXI link
+            self.inst.timeout = 600
         self.reflevel = reflevel
         self.name = name
         self.init_inst()
@@ -95,7 +88,7 @@ class flk_meter():
         self.inst.clear()
 	self.inst.write("*RST")
 	self.inst.write("*CLR")
-        self.inst.write("TRG_SRCE EXT")
+        self.inst.write("RMS FILT10HZ")
         #self.inst.write("GUARD EXT")
         #self.inst.write(":SYST:LSYN:STAT ON")
 	#self.inst.write(":sens:temp:tran rtd")      #select thermistor
@@ -145,10 +138,9 @@ class flk_meter():
     def set_dci_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write("DCI %.4f" % cmd)
-	self.inst.write("DCI FILT_OFF,RESL7,FAST_OFF")
+	self.inst.write("DCV FILT_OFF,RESL7,FAST_OFF")
 	self.inst.write("INPUT FRONT")
 	self.inst.write("AVG OFF")
-
 
     def set_dcv4w_range_avg16(self,cmd):
         # Setup SCPI DMM
@@ -162,9 +154,9 @@ class flk_meter():
 	self.inst.write("OHMS %.4f,FOUR_WR" % cmd)
 	self.inst.write("OHMS FILT_OFF,RESL8,FAST_OFF")
 	self.inst.write("OHMS LOI_OFF")
-	self.inst.write("INPUT FRONT")
+	self.inst.write("INPUT SUB_REAR")
 	self.inst.write("AVG OFF")
-	self.inst.write("DELAY 1")
+	self.inst.write("DELAY 2")
 
     def set_tohmf_rel_range(self,cmd):
         # Setup SCPI DMM
@@ -175,40 +167,50 @@ class flk_meter():
 	self.inst.write("AVG OFF")
 	#self.inst.write("DELAY 2")
 
-    def set_tohm_range(self,cmd):
+    def set_tohmf_range(self,cmd):
         # Setup SCPI DMM
 	self.inst.write("TRUE_OHMS %.4f" % cmd)
 	self.inst.write("TRUE_OHMS RESL8,FAST_OFF")
 	self.inst.write("TRUE_OHMS LOI_OFF")
-	self.inst.write("INPUT FRONT")
+	self.inst.write("AVG OFF")
+
+    def set_hohmf_range(self,cmd):
+        # Setup SCPI DMM
+	self.inst.write("HI_OHMS %.4f" % cmd)
+	self.inst.write("HI_OHMS RESL8,FAST_OFF.FOUR_WR")
+	self.inst.write("HI_OHMS LOI_OFF")
 	self.inst.write("AVG OFF")
 
     def set_tohm_rel_range(self,cmd):
         # Setup SCPI DMM
+	self.inst.write("INPUT SUB_B")
 	self.inst.write("TRUE_OHMS %.4f" % cmd)
-	self.inst.write("TRUE_OHMS RESL8,FAST_OFF")
-	self.inst.write("TRUE_OHMS LOI_OFF")
-	self.inst.write("INPUT SUB_REAR")
+	self.inst.write("TRUE_OHMS RESL8,FILT_OFF,FAST_OFF")
+	#self.inst.write("TRUE_OHMS LOI_OFF")
 	self.inst.write("AVG OFF")
 #	self.inst.write("DELAY 2")
 
-    def set_input(self,cmd):
-	self.inst.write("INPUT %s" % cmd)
-
     def set_ohm_range(self,cmd):
         # Setup SCPI DMM
-
 	self.inst.write(":SENS:RES:DIG 9;NPLC 10;AVER:COUN 10;TCON MOV")
 	self.inst.write(":SENS:RES:OCOM OFF")
 	self.inst.write(":SENS:RES:RANG %.2f" % cmd)
 
     def set_dcv_range(self,cmd):
         # Setup SCPI DMM
-	self.inst.write("DCV %.3f,FILT_OFF,RESL8,FAST_OFF" % cmd)
+	time.sleep(0.1)
+
+    def set_acv_range(self,cmd):
+        # Setup SCPI DMM
+	self.inst.write("ACV %.3f,FILT10HZ,RESL7" % cmd)
+
+    def set_input(self,cmd):
+        # Setup SCPI DMM
+	self.inst.write("INPUT %s" % cmd)
 
     def set_dcv_fast_range(self,cmd):
         # Setup SCPI DMM
-	self.inst.write("DCV %.3f,FILT_ON,RESL7,FAST_ON" % cmd)
+	self.inst.write("DCV %.3f,FILT_OFF,RESL8,FAST_ON" % cmd)
 
     def read_data(self,cmd):
         data_float = 0.0
@@ -226,10 +228,11 @@ class flk_meter():
         except ValueError:
             print("\033[6;36HException %s on read_data(), ValueError = %s\n" % (self.name,data_str))
             return (0,float(0)) # Exception on float conversion, 0 = error
+	#print data_str
         return (1,data_float) # Good read, 1 = converted to float w/o exception
 
     def get_data(self):
-        self.status_flag,data = self.read_data("X?")
+        self.status_flag,data = self.read_data("RDG?")
 	#print self.data
         if (self.status_flag):
             self.data = data#(data - 0.75) / 0.01 # Preamp A = 1000
