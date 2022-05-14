@@ -26,7 +26,7 @@ Its main purpose is to perform controlled thermal chamber sweeps and measure var
 
 ## Software requirements
 
-* Python 2.7.x
+* -Python 2.7.x- moving to Python 3.x
 * Installed and configured linux-gpib for GPIB interfacing
 * Installed and configured python-vxi11 for VXI interfacing
 * [NumPy](http://www.numpy.org/) - median/standard deviation analysis
@@ -150,9 +150,18 @@ Each ramp sequence has five stages. Speed or duration of each stage configured i
 * [Keithley 2002](https://xdevs.com/review/k2002) precision DMM
 * [HP/Agilent/Keysight 3458A](https://xdevs.com/fix/hp3458a) reference DMM
 * [HP/Agilent 34401A](https://xdevs.com/fix/hp34401a/) 6.5-digit DMM
+* [HP/Agilent 34420A](https://xdevs.com/fix/hp34420a/) 7.5-digit nanovoltmeter
 * [Fluke 8508A](https://xdevs.com/review/f8508a) reference DMM
 * [Datron 1281](https://xdevs.com/fix/d1281) reference DMM
-* Fluke 1590 SuperThermometer
+* Dataproof 160(https://xdevs.com/review/dp160_scanner/) low thermal scanner
+* Keithley 706A scanner
+* Keithley 6221 AC/DC current source
+* Keithley 6430 fA-grade SMU
+* Keithley 7168 nanovolt scanner
+* [Lakeshore 370 AC resistance bridge](https://xdevs.com/article/lake370/)
+* Guildline 9540 thermometer
+* HP 6653A DC system power supply
+* [Fluke 5700/5720/5730A](https://xdevs.com/fix/f5700a/) calibrator
 * Keithley 2182/2182A Nanovoltmeter
 * [Keithley 182/182-M](https://xdevs.com/review/kei182m) Nanovoltmeter
 * [Keithley 6517/6517A](https://xdevs.com/fix/kei6517/)/6517B Electrometer
@@ -160,6 +169,7 @@ Each ramp sequence has five stages. Speed or duration of each stage configured i
 * Fluke 1590 SuperThermometer
 * [Fluke 1529](https://xdevs.com/fix/chub_e4/) Chub-E4 Thermometer
 * HP/Agilent/Keysight 53131A Frequency counter
+* [Measurements International 6010B 6010C 6010T 6010D](https://mintl.com/products/6010d/) 10-digit resistance bridge
 * Delta-measurement for low ohmic resistances with Fluke 57xx MFC+DVM
 
 ### Temperature controllers
@@ -167,6 +177,8 @@ Each ramp sequence has five stages. Speed or duration of each stage configured i
 * [Keithley 2510](https://xdevs.com/fix/kei2510) TEC SMU for temperature chamber control
 * ILX 5910B TEC controller for temperature chamber control
 * Arroyo 585 via UART-RS232 interface
+* Arroyo 5310 via built-in UART-USB interface
+* Lakeshore 331 cryogenic thermometer
 
 ### Environment monitoring
 
