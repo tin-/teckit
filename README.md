@@ -171,6 +171,11 @@ Each ramp sequence has five stages. Speed or duration of each stage configured i
 * HP/Agilent/Keysight 53131A Frequency counter
 * [Measurements International 6010B 6010C 6010T 6010D](https://mintl.com/products/6010d/) 10-digit resistance bridge
 * Delta-measurement for low ohmic resistances with Fluke 57xx MFC+DVM
+* Chroma 6150x and 6160x AC programmable sources
+* AC-DC transfers for Fluke 792A AC Voltage Standard (with HP3458A or Keithley 2182 or HP34420A)
+* Wavetek 4920 AC Voltage Standard
+* Wavetek 4920M AC Voltage Standard
+* Agilent 4142B parametric analyzer SMU
 
 ### Temperature controllers
 
@@ -257,6 +262,16 @@ All measurement values like instrument readings, ambient temperature data, meter
 
 Four instruments are used : HP 3458A GPIB 2 and 3, Keithley 2002 GPIB 4 and 6.
 Temperature control done by Keithley 2510 GPIB 25 with 40W TEC module and Honeywell HEL-705 platinum RTD sensor.
+
+Also latest TECkit also has new "xDevs" temperature curve program:
+
+![xDevs curve program](https://xdevs.com/doc/xDevs.com/teckit/teckit_xdevs.png)
+
+Environment data is logged in sync with all instruments too, even if TEC control not used.
+
+![Environment sensor data](https://xdevs.com/doc/xDevs.com/teckit/teckit_env.png)
+
+h2. Adding own measurement instrumentation support
 
 ## Adding own measurement instrumentation support
 
